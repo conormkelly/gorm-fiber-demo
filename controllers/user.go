@@ -1,11 +1,11 @@
-package routes
+package controllers
 
 import (
 	"errors"
 
-	"github.com/conormkelly/fiber-demo/database"
 	"github.com/conormkelly/fiber-demo/models"
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 type User struct {
@@ -18,22 +18,26 @@ func Serialize(userModel models.User) User {
 	return User{ID: userModel.ID, FirstName: userModel.FirstName, LastName: userModel.LastName}
 }
 
-func CreateUser(c *fiber.Ctx) error {
-	var user models.User
+type UsersController struct {
+	DB *gorm.DB
+}
 
-	if err := c.BodyParser(&user); err != nil {
+func (handler *UsersController) CreateUser(c *fiber.Ctx) error {
+	user := &models.User{}
+
+	if err := c.BodyParser(user); err != nil {
 		return c.Status(400).JSON(err.Error())
 	}
 
-	database.Database.DB.Create(&user)
-	serializedUser := Serialize(user)
+	handler.DB.Create(&user)
+	serializedUser := Serialize(*user)
 
 	return c.Status(200).JSON(serializedUser)
 }
 
-func GetAllUsers(c *fiber.Ctx) error {
+func (handler *UsersController) GetAllUsers(c *fiber.Ctx) error {
 	users := []models.User{}
-	database.Database.DB.Find(&users)
+	handler.DB.Find(&users)
 
 	var serializedUsers = make([]User, len(users))
 	for i, user := range users {
@@ -43,22 +47,23 @@ func GetAllUsers(c *fiber.Ctx) error {
 	return c.Status(200).JSON(serializedUsers)
 }
 
-func findUser(id int, user *models.User) error {
-	database.Database.DB.Find(&user, "id = ?", id)
+// Helper function, TOOD: refactor
+func (handler *UsersController) findUser(id int, user *models.User) error {
+	handler.DB.Find(&user, "id = ?", id)
 	if user.ID == 0 {
 		return errors.New("User does not exist")
 	}
 	return nil
 }
 
-func GetUserById(c *fiber.Ctx) error {
+func (handler *UsersController) GetUserById(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
 		return c.Status(400).JSON("User ID must be an integer")
 	}
 
 	var user models.User
-	if err := findUser(id, &user); err != nil {
+	if err := handler.findUser(id, &user); err != nil {
 		return c.Status(400).JSON(err.Error())
 	}
 
@@ -66,14 +71,14 @@ func GetUserById(c *fiber.Ctx) error {
 	return c.Status(200).JSON(serializedUser)
 }
 
-func UpdateUser(c *fiber.Ctx) error {
+func (handler *UsersController) UpdateUser(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
 		return c.Status(400).JSON("User ID must be an integer")
 	}
 
 	var user models.User
-	if err := findUser(id, &user); err != nil {
+	if err := handler.findUser(id, &user); err != nil {
 		return c.Status(400).JSON(err.Error())
 	}
 
@@ -89,24 +94,24 @@ func UpdateUser(c *fiber.Ctx) error {
 		user.LastName = updatedUser.LastName
 	}
 
-	database.Database.DB.Save(user)
+	handler.DB.Save(user)
 
 	serializedUser := Serialize(user)
 	return c.Status(200).JSON(serializedUser)
 }
 
-func DeleteUser(c *fiber.Ctx) error {
+func (handler *UsersController) DeleteUser(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
 		return c.Status(400).JSON("User ID must be an integer")
 	}
 
 	var user models.User
-	if err := findUser(id, &user); err != nil {
+	if err := handler.findUser(id, &user); err != nil {
 		return c.Status(400).JSON(err.Error())
 	}
 
-	if err := database.Database.DB.Delete(user).Error; err != nil {
+	if err := handler.DB.Delete(user).Error; err != nil {
 		return c.Status(500).JSON(err.Error())
 	}
 

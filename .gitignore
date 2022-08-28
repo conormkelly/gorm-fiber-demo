@@ -1,5 +1,10 @@
 # Dev Dependencies
 /bin/air*
 
-test.db
+# Temp files
 /tmp/*
+/database/test.db
+
+# Test artefacts
+coverage.out
+profile.cov

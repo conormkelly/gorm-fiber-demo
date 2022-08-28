@@ -2,9 +2,11 @@
 
 # Setup
 
-## Hot reloading (optional)
+## Dev Tools
 
-It is optional but recommended to install _Air_, which allows for hot-reloading on file changes for improved developer experience.
+### Hot-reloading via Air
+
+It is optional but highly recommended to install _Air_, which allows for hot-reloading on file changes for improved developer experience.
 
 There are 2 ways to install it.
 
@@ -39,3 +41,19 @@ air
 # Otherwise:
 go run .
 ```
+
+## Testing
+
+To view overall coverage percentage:
+
+```sh
+go test -v -coverpkg=./... -coverprofile=profile.cov ./...
+go tool cover -func profile.cov
+
+```
+
+It may be helpful to add these commands as a function in `~/.bash_profile`.
+
+## Issues
+
+- Refactor package structure to improve testing / deduplication

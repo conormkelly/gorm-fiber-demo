@@ -9,14 +9,28 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-var Database SQLDatabase
-
-type SQLDatabase struct {
-	DB *gorm.DB
+type Database struct {
+	Conn *gorm.DB
 }
 
-func (dbInstance SQLDatabase) Connect() error {
-	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+type Options struct {
+	UseInMemoryDatabase bool
+	SQLitePath          *string
+	PerformMigration    bool
+}
+
+func (dbInstance *Database) Connect(options *Options) error {
+	var db *gorm.DB
+	var err error
+
+	if options.UseInMemoryDatabase {
+		db, err = gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
+	} else if options.SQLitePath != nil {
+		db, err = gorm.Open(sqlite.Open(*options.SQLitePath), &gorm.Config{})
+	} else {
+		log.Fatalln("Invalid DB config provided.")
+	}
+
 	if err != nil {
 		log.Fatal("Failed to connect to the database! \n", err.Error())
 	}
@@ -24,10 +38,12 @@ func (dbInstance SQLDatabase) Connect() error {
 	log.Println("Connected to the database.")
 	db.Logger = logger.Default.LogMode(logger.Info)
 
-	log.Println("Running migrations...")
-	db.AutoMigrate(&models.User{}, &models.Product{}, &models.Order{})
+	if options.PerformMigration {
+		log.Println("Running migrations...")
+		db.AutoMigrate(&models.User{}, &models.Product{}, &models.Order{})
+	}
 
-	Database.DB = db
+	dbInstance.Conn = db
 
 	return nil
 }
