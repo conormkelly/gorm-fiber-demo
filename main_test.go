@@ -50,11 +50,8 @@ func TestCreateUser(t *testing.T) {
 			description:        "Create valid user",
 			method:             "POST",
 			route:              "/api/users",
-			body:               strings.NewReader(`{ "first_name": "Harry", "last_name": "Potter" }`),
+			body:               strings.NewReader(`{ "first_name": "John", "last_name": "Doe" }`),
 			expectedStatusCode: 200,
-			// setup: func() {
-			// 	fmt.Println("Example")
-			// },
 		},
 		{
 			description:        "Malformed JSON",
@@ -68,7 +65,7 @@ func TestCreateUser(t *testing.T) {
 		// 	description:  "Create partial user",
 		// 	method:       "POST",
 		// 	route:        "/api/users",
-		// 	body:         strings.NewReader(`{ "first_name": "Harry" }`),
+		// 	body:         strings.NewReader(`{ "first_name": "John" }`),
 		// 	expectedCode: 400,
 		// },
 		{
@@ -77,7 +74,7 @@ func TestCreateUser(t *testing.T) {
 			route:              "/api/users",
 			body:               strings.NewReader(`{ INVALID JSON `),
 			expectedStatusCode: 400,
-			// TODO: improve response message here
+			expectedResponse:   `{"message":"invalid JSON request body provided"}`,
 		},
 		{
 			description:        "Send no JSON",
@@ -85,6 +82,7 @@ func TestCreateUser(t *testing.T) {
 			route:              "/api/users",
 			body:               nil,
 			expectedStatusCode: 400,
+			// expectedResponse:   `{"message":"invalid JSON request body provided"}`,
 		},
 	}
 
@@ -93,14 +91,22 @@ func TestCreateUser(t *testing.T) {
 func TestGetAllUsers(t *testing.T) {
 	testCases := []testCase{
 		{
-			description:        "Get all users",
+			description:        "Get all users when table not empty",
 			method:             "GET",
 			route:              "/api/users",
-			body:               nil,
 			expectedStatusCode: 200,
-			expectedResponse:   `[{"id":1,"first_name":"Harry","last_name":"Potter"}]`,
+			expectedResponse:   `[{"id":1,"first_name":"John","last_name":"Doe"}]`,
 		},
-		// TODO: add ability to clear table then re-test
+		{
+			description:        "Get all users when table is empty",
+			method:             "GET",
+			route:              "/api/users",
+			expectedStatusCode: 200,
+			expectedResponse:   `[]`,
+			setup: func() {
+				clearTable()
+			},
+		},
 	}
 
 	executeTests(t, testCases)
@@ -112,23 +118,24 @@ func TestGetUserById(t *testing.T) {
 			description:        "Get user by ID",
 			method:             "GET",
 			route:              "/api/users/1",
-			body:               nil,
 			expectedStatusCode: 200,
-			expectedResponse:   `{"id":1,"first_name":"Harry","last_name":"Potter"}`,
+			expectedResponse:   `{"id":1,"first_name":"John","last_name":"Doe"}`,
+			setup: func() {
+				clearTable()
+				addUser()
+			},
 		},
 		{
 			description:        "Get user by non-integer ID",
 			method:             "GET",
 			route:              "/api/users/one",
-			body:               nil,
 			expectedStatusCode: 400,
 			expectedResponse:   `{"message":"User ID must be an integer"}`,
 		},
 		{
-			description:        "Get user by zero ID",
+			description:        "Get non-existent user",
 			method:             "GET",
 			route:              "/api/users/0",
-			body:               nil,
 			expectedStatusCode: 400,
 			expectedResponse:   `{"message":"User does not exist"}`,
 		},
@@ -146,6 +153,18 @@ func TestUpdateUser(t *testing.T) {
 			body:               strings.NewReader(`{"first_name":"Larry","last_name":"Rotter"}`),
 			expectedStatusCode: 200,
 			expectedResponse:   `{"id":1,"first_name":"Larry","last_name":"Rotter"}`,
+			setup: func() {
+				clearTable()
+				addUser()
+			},
+		},
+		{
+			description:        "Update user with non-int id",
+			method:             "PUT",
+			route:              "/api/users/two",
+			body:               strings.NewReader(`{"first_name":"James","last_name":"Doe"}`),
+			expectedStatusCode: 400,
+			expectedResponse:   `{"message":"User ID must be an integer"}`,
 		},
 		{
 			description:        "Malformed JSON",
@@ -155,7 +174,14 @@ func TestUpdateUser(t *testing.T) {
 			expectedStatusCode: 400,
 			expectedResponse:   `{"message":"invalid JSON request body provided"}`,
 		},
-		// TODO: update non-existent user etc
+		{
+			description:        "Update non-existent user",
+			method:             "PUT",
+			route:              "/api/users/0",
+			body:               strings.NewReader(`{"first_name":"James","last_name":"Doe"}`),
+			expectedStatusCode: 400,
+			expectedResponse:   `{"message":"User does not exist"}`,
+		},
 	}
 
 	executeTests(t, testCases)
@@ -167,7 +193,6 @@ func TestDeleteUser(t *testing.T) {
 			description:        "Delete existing user",
 			method:             "DELETE",
 			route:              "/api/users/1",
-			body:               strings.NewReader(`{"first_name":"Larry","last_name":"Rotter"}`),
 			expectedStatusCode: 200,
 			expectedResponse:   `{"message":"Successfully deleted user"}`,
 		},
@@ -175,16 +200,22 @@ func TestDeleteUser(t *testing.T) {
 			description:        "Delete non-existent user",
 			method:             "DELETE",
 			route:              "/api/users/1",
-			body:               strings.NewReader(`{"first_name":"Larry","last_name":"Rotter"}`),
 			expectedStatusCode: 400,
 			expectedResponse:   `{"message":"User does not exist"}`,
 		},
-		// TODO: more test cases, improve status code handling
-		// also, make tests less temporally dependent
+		{
+			description:        "Delete user with non-int id",
+			method:             "DELETE",
+			route:              "/api/users/three",
+			expectedStatusCode: 400,
+			expectedResponse:   `{"message":"User ID must be an integer"}`,
+		},
 	}
 
 	executeTests(t, testCases)
 }
+
+// Helper methods
 
 type testCase struct {
 	description        string    // Description of the test case
@@ -225,4 +256,13 @@ func executeTests(t *testing.T, testCases []testCase) {
 	for _, test := range testCases {
 		executeTest(t, test)
 	}
+}
+
+func clearTable() {
+	app.DB.Conn.Where("id > ?", 0).Delete(&models.User{})
+}
+
+func addUser() {
+	user := &models.User{FirstName: "John", LastName: "Doe"}
+	app.DB.Conn.Create(user)
 }
