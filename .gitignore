@@ -7,4 +7,5 @@
 
 # Test artefacts
 coverage.out
+coverage.html
 profile.cov

@@ -52,7 +52,13 @@ go tool cover -func profile.cov
 
 ```
 
-It may be helpful to add these commands as a function in `~/.bash_profile`.
+Generating code coverage HTML:
+```sh
+ go test -covermode=set -coverpkg=./... -coverprofile coverage.out -v ./...
+ go tool cover -html coverage.out -o coverage.html
+```
+
+It may be helpful to add these commands as functions in `~/.bash_profile`.
 
 ## Issues
 
