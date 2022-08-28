@@ -12,6 +12,8 @@ type APIResponse struct {
 	Message string `json:"message"`
 }
 
+// This is not the user model,
+// think of it as a serializer
 type User struct {
 	ID        uint   `json:"id"`
 	FirstName string `json:"first_name"`
