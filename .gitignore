@@ -1,8 +1,8 @@
 # Dev Dependencies
-/bin/air*
+/bin/
 
 # Temp files
-/tmp/*
+/tmp/
 /database/test.db
 
 # Test artefacts
