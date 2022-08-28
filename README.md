@@ -65,4 +65,4 @@ It may be helpful to add these commands as functions in `~/.bash_profile`.
 
 - Look into validation frameworks
 - Swagger integration?
-- Add setup functions to unit tests for update and delete
+- Extract controller logic to service?
