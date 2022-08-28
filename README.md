@@ -53,6 +53,7 @@ go tool cover -func profile.cov
 ```
 
 Generating code coverage HTML:
+
 ```sh
  go test -covermode=set -coverpkg=./... -coverprofile coverage.out -v ./...
  go tool cover -html coverage.out -o coverage.html
@@ -60,6 +61,8 @@ Generating code coverage HTML:
 
 It may be helpful to add these commands as functions in `~/.bash_profile`.
 
-## Issues
+## Todo
 
-- Refactor package structure to improve testing / deduplication
+- Look into validation frameworks
+- Swagger integration?
+- Add setup functions to unit tests for update and delete
