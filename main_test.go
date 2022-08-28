@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/conormkelly/fiber-demo/database"
+	"github.com/conormkelly/fiber-demo/models"
 )
 
 var app App
@@ -12,7 +13,8 @@ var app App
 // Create an in-memory SQLite DB for testing purposes.
 func TestMain(m *testing.M) {
 	db := database.Database{}
-	db.Connect(&database.Options{UseInMemoryDatabase: true, PerformMigration: true})
+	modelsToMigrate := []interface{}{&models.User{}}
+	db.Connect(&database.Options{UseInMemoryDatabase: true, ModelsToMigrate: modelsToMigrate})
 
 	app.Initialize(&db)
 

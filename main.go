@@ -5,6 +5,7 @@ import (
 
 	"github.com/conormkelly/fiber-demo/controllers"
 	"github.com/conormkelly/fiber-demo/database"
+	"github.com/conormkelly/fiber-demo/models"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -34,7 +35,8 @@ func (app *App) initializeRoutes() {
 func main() {
 	db := &database.Database{}
 	connectionString := "./database/test.db"
-	db.Connect(&database.Options{SQLitePath: &connectionString, PerformMigration: true})
+	modelsToMigrate := []interface{}{&models.User{}}
+	db.Connect(&database.Options{SQLitePath: &connectionString, ModelsToMigrate: modelsToMigrate})
 
 	app := &App{}
 	app.Initialize(db)

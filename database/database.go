@@ -3,7 +3,6 @@ package database
 import (
 	"log"
 
-	"github.com/conormkelly/fiber-demo/models"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -16,7 +15,7 @@ type Database struct {
 type Options struct {
 	UseInMemoryDatabase bool
 	SQLitePath          *string
-	PerformMigration    bool
+	ModelsToMigrate     []interface{}
 }
 
 func (dbInstance *Database) Connect(options *Options) error {
@@ -38,11 +37,10 @@ func (dbInstance *Database) Connect(options *Options) error {
 	log.Println("Connected to the database.")
 	db.Logger = logger.Default.LogMode(logger.Info)
 
-	if options.PerformMigration {
-		log.Println("Running migrations...")
-		// AutoMigrate is a variadic function,
-		// so if you have multiple models, you can pass them all
-		db.AutoMigrate(&models.User{})
+	if len(options.ModelsToMigrate) > 0 {
+		log.Println("Running migrations.")
+		// Variadic function
+		db.AutoMigrate(options.ModelsToMigrate...)
 	}
 
 	dbInstance.Conn = db
