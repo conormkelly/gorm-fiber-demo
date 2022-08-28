@@ -6,6 +6,7 @@ import (
 	"github.com/conormkelly/fiber-demo/controllers"
 	"github.com/conormkelly/fiber-demo/database"
 	"github.com/conormkelly/fiber-demo/models"
+	"github.com/conormkelly/fiber-demo/services"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -39,7 +40,7 @@ func (app *App) Initialize(db *database.Database) {
 }
 
 func (app *App) initializeRoutes() {
-	usersController := &controllers.UsersController{DB: app.DB.Conn}
+	usersController := &controllers.UsersController{Service: &services.UserService{DB: app.DB}}
 
 	app.Fiber.Post("/api/users", usersController.CreateUser)
 	app.Fiber.Get("/api/users", usersController.GetAllUsers)

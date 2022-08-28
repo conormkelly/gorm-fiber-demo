@@ -136,8 +136,8 @@ func TestGetUserById(t *testing.T) {
 			description:        "Get non-existent user",
 			method:             "GET",
 			route:              "/api/users/0",
-			expectedStatusCode: 400,
-			expectedResponse:   `{"message":"User does not exist"}`,
+			expectedStatusCode: 404,
+			expectedResponse:   `{"message":"user does not exist"}`,
 		},
 	}
 
@@ -179,8 +179,8 @@ func TestUpdateUser(t *testing.T) {
 			method:             "PUT",
 			route:              "/api/users/0",
 			body:               strings.NewReader(`{"first_name":"James","last_name":"Doe"}`),
-			expectedStatusCode: 400,
-			expectedResponse:   `{"message":"User does not exist"}`,
+			expectedStatusCode: 404,
+			expectedResponse:   `{"message":"user does not exist"}`,
 		},
 	}
 
@@ -200,8 +200,8 @@ func TestDeleteUser(t *testing.T) {
 			description:        "Delete non-existent user",
 			method:             "DELETE",
 			route:              "/api/users/1",
-			expectedStatusCode: 400,
-			expectedResponse:   `{"message":"User does not exist"}`,
+			expectedStatusCode: 404,
+			expectedResponse:   `{"message":"user does not exist"}`,
 		},
 		{
 			description:        "Delete user with non-int id",
