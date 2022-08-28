@@ -3,6 +3,7 @@ package controllers
 import (
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http/httptest"
 	"os"
 	"strings"
@@ -44,7 +45,10 @@ func (app *App) initializeRoutes() {
 func TestMain(m *testing.M) {
 	db := database.Database{}
 	modelsToMigrate := []interface{}{&models.User{}}
-	db.Connect(&database.Options{UseInMemoryDatabase: true, ModelsToMigrate: modelsToMigrate})
+	err := db.Connect(&database.Options{UseInMemoryDatabase: true, ModelsToMigrate: modelsToMigrate})
+	if err != nil {
+		log.Fatal("Database failed to connect: " + err.Error())
+	}
 
 	app.Initialize(&db)
 

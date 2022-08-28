@@ -36,7 +36,10 @@ func main() {
 	db := &database.Database{}
 	connectionString := "./database/test.db"
 	modelsToMigrate := []interface{}{&models.User{}}
-	db.Connect(&database.Options{SQLitePath: &connectionString, ModelsToMigrate: modelsToMigrate})
+	err := db.Connect(&database.Options{SQLitePath: &connectionString, ModelsToMigrate: modelsToMigrate})
+	if err != nil {
+		log.Fatal("Database failed to connect: " + err.Error())
+	}
 
 	app := &App{}
 	app.Initialize(db)

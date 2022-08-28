@@ -1,6 +1,7 @@
 package database
 
 import (
+	"errors"
 	"log"
 
 	"gorm.io/driver/sqlite"
@@ -27,11 +28,11 @@ func (dbInstance *Database) Connect(options *Options) error {
 	} else if options.SQLitePath != nil {
 		db, err = gorm.Open(sqlite.Open(*options.SQLitePath), &gorm.Config{})
 	} else {
-		log.Fatalln("Invalid DB config provided.")
+		return errors.New("invalid DB config provided")
 	}
 
 	if err != nil {
-		log.Fatal("Failed to connect to the database! \n", err.Error())
+		return err
 	}
 
 	log.Println("Connected to the database.")

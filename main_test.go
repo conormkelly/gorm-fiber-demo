@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"testing"
 
@@ -14,7 +15,10 @@ var app App
 func TestMain(m *testing.M) {
 	db := database.Database{}
 	modelsToMigrate := []interface{}{&models.User{}}
-	db.Connect(&database.Options{UseInMemoryDatabase: true, ModelsToMigrate: modelsToMigrate})
+	err := db.Connect(&database.Options{UseInMemoryDatabase: true, ModelsToMigrate: modelsToMigrate})
+	if err != nil {
+		log.Fatal("Database failed to connect: " + err.Error())
+	}
 
 	app.Initialize(&db)
 
