@@ -32,6 +32,31 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+func Test404Handler(t *testing.T) {
+	test := testCase{
+		description:        "Test non-existent route",
+		method:             "GET",
+		route:              "/api/non-existent-route",
+		body:               nil,
+		expectedStatusCode: 404,
+		expectedResponse:   `{"message":"Cannot GET /api/non-existent-route"}`,
+	}
+	executeTest(t, test)
+}
+
+// TODO: implement this
+// func TestInvalidJSON(t *testing.T) {
+// 	test := testCase{
+// 		description:        "Malformed JSON",
+// 		method:             "POST",
+// 		route:              "/api/users",
+// 		body:               strings.NewReader(`{ "first_name": NO CLOSING BRACKET`),
+// 		expectedStatusCode: 400,
+// 		expectedResponse:   `{"message":"invalid JSON request body provided"}`,
+// 	}
+// 	executeTest(t, test)
+// }
+
 func TestCreateUser(t *testing.T) {
 	testCases := []testCase{
 		{
@@ -40,6 +65,9 @@ func TestCreateUser(t *testing.T) {
 			route:              "/api/users",
 			body:               strings.NewReader(`{ "first_name": "Harry", "last_name": "Potter" }`),
 			expectedStatusCode: 200,
+			// setup: func() {
+			// 	fmt.Println("Example")
+			// },
 		},
 		// {
 		// 	description:  "Create partial user",
@@ -156,34 +184,42 @@ func TestDeleteUser(t *testing.T) {
 }
 
 type testCase struct {
-	description        string    // description of the test case
-	method             string    // GET POST etc
-	route              string    // route path to test
+	description        string    // Description of the test case
+	method             string    // GET, POST etc
+	route              string    // Endpoint to test
 	body               io.Reader // JSON request body
 	expectedStatusCode int       // HTTP status code
-	expectedResponse   string    // response body
+	expectedResponse   string    // Response body
+	setup              func()    // Hook to run a function before the test executes
 }
 
-// Helper function
+// Helper functions
+func executeTest(t *testing.T, test testCase) {
+	// Hook to run a function before the test executes
+	if test.setup != nil {
+		test.setup()
+	}
+	// Create a new HTTP request with the route from the test case
+	req := httptest.NewRequest(test.method, test.route, test.body)
+	req.Header.Set("Content-Type", "application/json")
+
+	// Perform the request against the Fiber app,
+	// with a timeout of 500ms
+	resp, _ := app.Fiber.Test(req, 500)
+
+	assert.Equalf(t, test.expectedStatusCode, resp.StatusCode, test.description)
+
+	if test.expectedResponse != "" {
+		body, err := ioutil.ReadAll(resp.Body)
+		assert.Nil(t, err, "Error parsing response body")
+		actualResponse := string(body)
+		assert.Equalf(t, test.expectedResponse, actualResponse, test.description)
+	}
+}
+
 func executeTests(t *testing.T, testCases []testCase) {
-	// Iterate through test single test cases
+	// Iterate through test cases
 	for _, test := range testCases {
-		// Create a new http request with the route from the test case
-		req := httptest.NewRequest(test.method, test.route, test.body)
-		req.Header.Set("Content-Type", "application/json")
-
-		// Perform the request plain with the app,
-		// the second argument is a request latency
-		// (set to -1 for no latency)
-		resp, _ := app.Fiber.Test(req, -1)
-
-		assert.Equalf(t, test.expectedStatusCode, resp.StatusCode, test.description)
-
-		if test.expectedResponse != "" {
-			body, err := ioutil.ReadAll(resp.Body)
-			assert.Nil(t, err, "Error parsing response body")
-			actualResponse := string(body)
-			assert.Equalf(t, test.expectedResponse, actualResponse, test.description)
-		}
+		executeTest(t, test)
 	}
 }
