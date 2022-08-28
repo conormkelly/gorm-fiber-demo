@@ -16,7 +16,23 @@ type App struct {
 
 func (app *App) Initialize(db *database.Database) {
 	app.DB = db
-	fiberApp := fiber.New()
+	// Create a new fiber instance with custom config
+	fiberApp := fiber.New(fiber.Config{
+		// Override default error handler
+		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
+			// Status code defaults to 500
+			code := fiber.StatusInternalServerError
+
+			// Retrieve the custom status code if it's an fiber.*Error
+			if e, ok := err.(*fiber.Error); ok {
+				code = e.Code
+			}
+
+			// Send custom error
+			return ctx.Status(code).JSON(controllers.APIResponse{Message: err.Error()})
+		},
+	})
+
 	app.Fiber = fiberApp
 
 	app.initializeRoutes()
