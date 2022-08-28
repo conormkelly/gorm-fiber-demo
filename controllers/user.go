@@ -26,22 +26,22 @@ type UsersController struct {
 	DB *gorm.DB
 }
 
-func (handler *UsersController) CreateUser(c *fiber.Ctx) error {
+func (controller *UsersController) CreateUser(c *fiber.Ctx) error {
 	user := &models.User{}
 
 	if err := c.BodyParser(user); err != nil {
 		return c.Status(400).JSON(APIResponse{Message: err.Error()})
 	}
 
-	handler.DB.Create(&user)
+	controller.DB.Create(&user)
 	serializedUser := Serialize(*user)
 
 	return c.Status(200).JSON(serializedUser)
 }
 
-func (handler *UsersController) GetAllUsers(c *fiber.Ctx) error {
+func (controller *UsersController) GetAllUsers(c *fiber.Ctx) error {
 	users := []models.User{}
-	handler.DB.Find(&users)
+	controller.DB.Find(&users)
 
 	var serializedUsers = make([]User, len(users))
 	for i, user := range users {
@@ -52,22 +52,22 @@ func (handler *UsersController) GetAllUsers(c *fiber.Ctx) error {
 }
 
 // Helper function, TOOD: refactor
-func (handler *UsersController) findUser(id int, user *models.User) error {
-	handler.DB.Find(&user, "id = ?", id)
+func (controller *UsersController) findUser(id int, user *models.User) error {
+	controller.DB.Find(&user, "id = ?", id)
 	if user.ID == 0 {
 		return errors.New("User does not exist")
 	}
 	return nil
 }
 
-func (handler *UsersController) GetUserById(c *fiber.Ctx) error {
+func (controller *UsersController) GetUserById(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
 		return c.Status(400).JSON(APIResponse{Message: "User ID must be an integer"})
 	}
 
 	var user models.User
-	if err := handler.findUser(id, &user); err != nil {
+	if err := controller.findUser(id, &user); err != nil {
 		return c.Status(400).JSON(APIResponse{Message: err.Error()})
 	}
 
@@ -75,14 +75,14 @@ func (handler *UsersController) GetUserById(c *fiber.Ctx) error {
 	return c.Status(200).JSON(serializedUser)
 }
 
-func (handler *UsersController) UpdateUser(c *fiber.Ctx) error {
+func (controller *UsersController) UpdateUser(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
 		return c.Status(400).JSON(APIResponse{Message: "User ID must be an integer"})
 	}
 
 	var user models.User
-	if err := handler.findUser(id, &user); err != nil {
+	if err := controller.findUser(id, &user); err != nil {
 		return c.Status(400).JSON(APIResponse{Message: err.Error()})
 	}
 
@@ -98,24 +98,24 @@ func (handler *UsersController) UpdateUser(c *fiber.Ctx) error {
 		user.LastName = updatedUser.LastName
 	}
 
-	handler.DB.Save(user)
+	controller.DB.Save(user)
 
 	serializedUser := Serialize(user)
 	return c.Status(200).JSON(serializedUser)
 }
 
-func (handler *UsersController) DeleteUser(c *fiber.Ctx) error {
+func (controller *UsersController) DeleteUser(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
 		return c.Status(400).JSON(APIResponse{Message: "User ID must be an integer"})
 	}
 
 	var user models.User
-	if err := handler.findUser(id, &user); err != nil {
+	if err := controller.findUser(id, &user); err != nil {
 		return c.Status(400).JSON(APIResponse{Message: err.Error()})
 	}
 
-	if err := handler.DB.Delete(user).Error; err != nil {
+	if err := controller.DB.Delete(user).Error; err != nil {
 		return c.Status(500).JSON(APIResponse{Message: err.Error()})
 	}
 
