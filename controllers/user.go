@@ -28,10 +28,17 @@ type UsersController struct {
 	DB *gorm.DB
 }
 
+func ParseBody(ctx *fiber.Ctx, target interface{}) error {
+	if err := ctx.BodyParser(target); err != nil {
+		return errors.New("invalid JSON request body provided")
+	}
+	return nil
+}
+
 func (controller *UsersController) CreateUser(c *fiber.Ctx) error {
 	user := &models.User{}
 
-	if err := c.BodyParser(user); err != nil {
+	if err := ParseBody(c, user); err != nil {
 		return c.Status(400).JSON(APIResponse{Message: err.Error()})
 	}
 
@@ -89,7 +96,7 @@ func (controller *UsersController) UpdateUser(c *fiber.Ctx) error {
 	}
 
 	var updatedUser models.User
-	if err := c.BodyParser(&updatedUser); err != nil {
+	if err := ParseBody(c, &updatedUser); err != nil {
 		return c.Status(400).JSON(APIResponse{Message: err.Error()})
 	}
 

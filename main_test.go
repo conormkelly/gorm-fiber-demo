@@ -44,19 +44,6 @@ func Test404Handler(t *testing.T) {
 	executeTest(t, test)
 }
 
-// TODO: implement this
-// func TestInvalidJSON(t *testing.T) {
-// 	test := testCase{
-// 		description:        "Malformed JSON",
-// 		method:             "POST",
-// 		route:              "/api/users",
-// 		body:               strings.NewReader(`{ "first_name": NO CLOSING BRACKET`),
-// 		expectedStatusCode: 400,
-// 		expectedResponse:   `{"message":"invalid JSON request body provided"}`,
-// 	}
-// 	executeTest(t, test)
-// }
-
 func TestCreateUser(t *testing.T) {
 	testCases := []testCase{
 		{
@@ -68,6 +55,14 @@ func TestCreateUser(t *testing.T) {
 			// setup: func() {
 			// 	fmt.Println("Example")
 			// },
+		},
+		{
+			description:        "Malformed JSON",
+			method:             "POST",
+			route:              "/api/users",
+			body:               strings.NewReader(`{ "first_name": NO CLOSING BRACKET`),
+			expectedStatusCode: 400,
+			expectedResponse:   `{"message":"invalid JSON request body provided"}`,
 		},
 		// {
 		// 	description:  "Create partial user",
@@ -151,6 +146,14 @@ func TestUpdateUser(t *testing.T) {
 			body:               strings.NewReader(`{"first_name":"Larry","last_name":"Rotter"}`),
 			expectedStatusCode: 200,
 			expectedResponse:   `{"id":1,"first_name":"Larry","last_name":"Rotter"}`,
+		},
+		{
+			description:        "Malformed JSON",
+			method:             "PUT",
+			route:              "/api/users/1",
+			body:               strings.NewReader(`{ "first_name": NO CLOSING BRACKET`),
+			expectedStatusCode: 400,
+			expectedResponse:   `{"message":"invalid JSON request body provided"}`,
 		},
 		// TODO: update non-existent user etc
 	}
