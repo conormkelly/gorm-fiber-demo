@@ -72,6 +72,7 @@ func TestCreateUser(t *testing.T) {
 			route:              "/api/users",
 			body:               strings.NewReader(`{ INVALID JSON `),
 			expectedStatusCode: 400,
+			// TODO: improve response message here
 		},
 		{
 			description:        "Send no JSON",
@@ -116,7 +117,7 @@ func TestGetUserById(t *testing.T) {
 			route:              "/api/users/one",
 			body:               nil,
 			expectedStatusCode: 400,
-			expectedResponse:   `"User ID must be an integer"`,
+			expectedResponse:   `{"message":"User ID must be an integer"}`,
 		},
 		{
 			description:        "Get user by zero ID",
@@ -124,7 +125,7 @@ func TestGetUserById(t *testing.T) {
 			route:              "/api/users/0",
 			body:               nil,
 			expectedStatusCode: 400,
-			expectedResponse:   `"User does not exist"`,
+			expectedResponse:   `{"message":"User does not exist"}`,
 		},
 	}
 
@@ -155,7 +156,7 @@ func TestDeleteUser(t *testing.T) {
 			route:              "/api/users/1",
 			body:               strings.NewReader(`{"first_name":"Larry","last_name":"Rotter"}`),
 			expectedStatusCode: 200,
-			expectedResponse:   `"Successfully deleted user"`,
+			expectedResponse:   `{"message":"Successfully deleted user"}`,
 		},
 		{
 			description:        "Delete non-existent user",
@@ -163,7 +164,7 @@ func TestDeleteUser(t *testing.T) {
 			route:              "/api/users/1",
 			body:               strings.NewReader(`{"first_name":"Larry","last_name":"Rotter"}`),
 			expectedStatusCode: 400,
-			expectedResponse:   `"User does not exist"`,
+			expectedResponse:   `{"message":"User does not exist"}`,
 		},
 		// TODO: more test cases, improve status code handling
 		// also, make tests less temporally dependent

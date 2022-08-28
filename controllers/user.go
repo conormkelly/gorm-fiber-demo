@@ -8,6 +8,10 @@ import (
 	"gorm.io/gorm"
 )
 
+type APIResponse struct {
+	Message string `json:"message"`
+}
+
 type User struct {
 	ID        uint   `json:"id"`
 	FirstName string `json:"first_name"`
@@ -26,7 +30,7 @@ func (handler *UsersController) CreateUser(c *fiber.Ctx) error {
 	user := &models.User{}
 
 	if err := c.BodyParser(user); err != nil {
-		return c.Status(400).JSON(err.Error())
+		return c.Status(400).JSON(APIResponse{Message: err.Error()})
 	}
 
 	handler.DB.Create(&user)
@@ -59,12 +63,12 @@ func (handler *UsersController) findUser(id int, user *models.User) error {
 func (handler *UsersController) GetUserById(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
-		return c.Status(400).JSON("User ID must be an integer")
+		return c.Status(400).JSON(APIResponse{Message: "User ID must be an integer"})
 	}
 
 	var user models.User
 	if err := handler.findUser(id, &user); err != nil {
-		return c.Status(400).JSON(err.Error())
+		return c.Status(400).JSON(APIResponse{Message: err.Error()})
 	}
 
 	serializedUser := Serialize(user)
@@ -74,17 +78,17 @@ func (handler *UsersController) GetUserById(c *fiber.Ctx) error {
 func (handler *UsersController) UpdateUser(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
-		return c.Status(400).JSON("User ID must be an integer")
+		return c.Status(400).JSON(APIResponse{Message: "User ID must be an integer"})
 	}
 
 	var user models.User
 	if err := handler.findUser(id, &user); err != nil {
-		return c.Status(400).JSON(err.Error())
+		return c.Status(400).JSON(APIResponse{Message: err.Error()})
 	}
 
 	var updatedUser models.User
 	if err := c.BodyParser(&updatedUser); err != nil {
-		return c.Status(400).JSON(err.Error())
+		return c.Status(400).JSON(APIResponse{Message: err.Error()})
 	}
 
 	if updatedUser.FirstName != "" {
@@ -103,17 +107,17 @@ func (handler *UsersController) UpdateUser(c *fiber.Ctx) error {
 func (handler *UsersController) DeleteUser(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
-		return c.Status(400).JSON("User ID must be an integer")
+		return c.Status(400).JSON(APIResponse{Message: "User ID must be an integer"})
 	}
 
 	var user models.User
 	if err := handler.findUser(id, &user); err != nil {
-		return c.Status(400).JSON(err.Error())
+		return c.Status(400).JSON(APIResponse{Message: err.Error()})
 	}
 
 	if err := handler.DB.Delete(user).Error; err != nil {
-		return c.Status(500).JSON(err.Error())
+		return c.Status(500).JSON(APIResponse{Message: err.Error()})
 	}
 
-	return c.Status(200).JSON("Successfully deleted user")
+	return c.Status(200).JSON(APIResponse{Message: "Successfully deleted user"})
 }

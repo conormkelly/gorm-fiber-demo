@@ -40,7 +40,9 @@ func (dbInstance *Database) Connect(options *Options) error {
 
 	if options.PerformMigration {
 		log.Println("Running migrations...")
-		db.AutoMigrate(&models.User{}, &models.Product{}, &models.Order{})
+		// AutoMigrate is a variadic function,
+		// so if you have multiple models, you can pass them all
+		db.AutoMigrate(&models.User{})
 	}
 
 	dbInstance.Conn = db
