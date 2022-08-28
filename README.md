@@ -44,6 +44,12 @@ go run .
 
 ## Testing
 
+To test all packages:
+
+```sh
+go test ./...
+```
+
 To view overall coverage percentage:
 
 ```sh
@@ -63,6 +69,5 @@ It may be helpful to add these commands as functions in `~/.bash_profile`.
 
 ## Todo
 
-- Look into validation frameworks
-- Swagger integration?
-- Extract controller logic to service?
+- Look into validation frameworks (similar to AJV etc)
+- Swagger integration
