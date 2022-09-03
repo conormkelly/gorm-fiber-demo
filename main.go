@@ -27,6 +27,10 @@ func (app *App) Initialize(db *database.Database) {
 			// Retrieve the custom status code if it's an fiber.*Error
 			if e, ok := err.(*fiber.Error); ok {
 				code = e.Code
+			} else {
+				// Log, but return a generic error to client to avoid leaking error details
+				log.Printf("An application error occured: " + err.Error())
+				err = fiber.NewError(500, "sorry, something went wrong")
 			}
 
 			// Send custom error
