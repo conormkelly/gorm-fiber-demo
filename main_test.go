@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -37,7 +38,6 @@ func Test404Handler(t *testing.T) {
 		description:        "Test non-existent route",
 		method:             "GET",
 		route:              "/api/non-existent-route",
-		body:               nil,
 		expectedStatusCode: 404,
 		expectedResponse:   `{"message":"Cannot GET /api/non-existent-route"}`,
 	}
@@ -96,6 +96,10 @@ func TestGetAllUsers(t *testing.T) {
 			route:              "/api/users",
 			expectedStatusCode: 200,
 			expectedResponse:   `[{"id":1,"first_name":"John","last_name":"Doe"}]`,
+			setup: func() {
+				clearTable()
+				addUser()
+			},
 		},
 		{
 			description:        "Get all users when table is empty",
@@ -135,9 +139,12 @@ func TestGetUserById(t *testing.T) {
 		{
 			description:        "Get non-existent user",
 			method:             "GET",
-			route:              "/api/users/0",
+			route:              "/api/users/1",
 			expectedStatusCode: 404,
 			expectedResponse:   `{"message":"user does not exist"}`,
+			setup: func() {
+				clearTable()
+			},
 		},
 	}
 
@@ -195,6 +202,10 @@ func TestDeleteUser(t *testing.T) {
 			route:              "/api/users/1",
 			expectedStatusCode: 200,
 			expectedResponse:   `{"message":"Successfully deleted user"}`,
+			setup: func() {
+				clearTable()
+				addUser()
+			},
 		},
 		{
 			description:        "Delete non-existent user",
@@ -202,6 +213,9 @@ func TestDeleteUser(t *testing.T) {
 			route:              "/api/users/1",
 			expectedStatusCode: 404,
 			expectedResponse:   `{"message":"user does not exist"}`,
+			setup: func() {
+				clearTable()
+			},
 		},
 		{
 			description:        "Delete user with non-int id",
@@ -228,27 +242,29 @@ type testCase struct {
 }
 
 func executeTest(t *testing.T, test testCase) {
-	// Hook to run a function before the test executes
-	if test.setup != nil {
-		test.setup()
-	}
-	// Create a new HTTP request with the route from the test case
-	req := httptest.NewRequest(test.method, test.route, test.body)
-	req.Header.Set("Content-Type", "application/json")
+	t.Run(fmt.Sprintf("%s - %s", t.Name(), test.description), func(t *testing.T) {
+		// Hook to run a function before the test executes
+		if test.setup != nil {
+			test.setup()
+		}
+		// Create a new HTTP request with the route from the test case
+		req := httptest.NewRequest(test.method, test.route, test.body)
+		req.Header.Set("Content-Type", "application/json")
 
-	// Perform the request against the Fiber app,
-	// with a timeout of 500ms
-	resp, err := app.Fiber.Test(req, 500)
-	assert.Nil(t, err, "Fiber.Test returned an error")
+		// Perform the request against the Fiber app,
+		// with a timeout of 500ms
+		resp, err := app.Fiber.Test(req, 500)
+		assert.Nil(t, err, "Fiber.Test returned an error")
 
-	assert.Equalf(t, test.expectedStatusCode, resp.StatusCode, test.description)
+		assert.Equalf(t, test.expectedStatusCode, resp.StatusCode, test.description)
 
-	if test.expectedResponse != "" {
-		body, err := ioutil.ReadAll(resp.Body)
-		assert.Nil(t, err, "Error parsing response body")
-		actualResponse := string(body)
-		assert.Equalf(t, test.expectedResponse, actualResponse, test.description)
-	}
+		if test.expectedResponse != "" {
+			body, err := ioutil.ReadAll(resp.Body)
+			assert.Nil(t, err, "Error parsing response body")
+			actualResponse := string(body)
+			assert.Equalf(t, test.expectedResponse, actualResponse, test.description)
+		}
+	})
 }
 
 func executeTests(t *testing.T, testCases []testCase) {
