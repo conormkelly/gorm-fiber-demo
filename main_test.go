@@ -22,7 +22,7 @@ var app App
 func TestMain(m *testing.M) {
 	db := database.Database{}
 	modelsToMigrate := []interface{}{&models.User{}}
-	err := db.Connect(&database.Options{UseInMemoryDatabase: true, ModelsToMigrate: modelsToMigrate})
+	err := db.Connect(&database.Options{UseInMemoryDatabase: true, InMemoryDatabaseName: "main_app", ModelsToMigrate: modelsToMigrate})
 	if err != nil {
 		log.Fatal("Database failed to connect: " + err.Error())
 	}
@@ -41,7 +41,7 @@ func Test404Handler(t *testing.T) {
 		expectedStatusCode: 404,
 		expectedResponse:   `{"message":"Cannot GET /api/non-existent-route"}`,
 	}
-	executeTest(t, test)
+	executeTest(t, &app, test)
 }
 
 func TestCreateUser(t *testing.T) {
@@ -82,11 +82,11 @@ func TestCreateUser(t *testing.T) {
 			route:              "/api/users",
 			body:               nil,
 			expectedStatusCode: 400,
-			// expectedResponse:   `{"message":"invalid JSON request body provided"}`,
+			expectedResponse:   `{"message":"invalid JSON request body provided"}`,
 		},
 	}
 
-	executeTests(t, testCases)
+	executeTests(t, &app, testCases)
 }
 func TestGetAllUsers(t *testing.T) {
 	testCases := []testCase{
@@ -97,8 +97,8 @@ func TestGetAllUsers(t *testing.T) {
 			expectedStatusCode: 200,
 			expectedResponse:   `[{"id":1,"first_name":"John","last_name":"Doe"}]`,
 			setup: func() {
-				clearTable()
-				addUser()
+				clearTable(&app)
+				addUser(&app)
 			},
 		},
 		{
@@ -108,12 +108,12 @@ func TestGetAllUsers(t *testing.T) {
 			expectedStatusCode: 200,
 			expectedResponse:   `[]`,
 			setup: func() {
-				clearTable()
+				clearTable(&app)
 			},
 		},
 	}
 
-	executeTests(t, testCases)
+	executeTests(t, &app, testCases)
 }
 
 func TestGetUserById(t *testing.T) {
@@ -125,8 +125,8 @@ func TestGetUserById(t *testing.T) {
 			expectedStatusCode: 200,
 			expectedResponse:   `{"id":1,"first_name":"John","last_name":"Doe"}`,
 			setup: func() {
-				clearTable()
-				addUser()
+				clearTable(&app)
+				addUser(&app)
 			},
 		},
 		{
@@ -143,12 +143,12 @@ func TestGetUserById(t *testing.T) {
 			expectedStatusCode: 404,
 			expectedResponse:   `{"message":"user does not exist"}`,
 			setup: func() {
-				clearTable()
+				clearTable(&app)
 			},
 		},
 	}
 
-	executeTests(t, testCases)
+	executeTests(t, &app, testCases)
 }
 
 func TestUpdateUser(t *testing.T) {
@@ -161,8 +161,8 @@ func TestUpdateUser(t *testing.T) {
 			expectedStatusCode: 200,
 			expectedResponse:   `{"id":1,"first_name":"James","last_name":"Doe"}`,
 			setup: func() {
-				clearTable()
-				addUser()
+				clearTable(&app)
+				addUser(&app)
 			},
 		},
 		{
@@ -191,7 +191,7 @@ func TestUpdateUser(t *testing.T) {
 		},
 	}
 
-	executeTests(t, testCases)
+	executeTests(t, &app, testCases)
 }
 
 func TestDeleteUser(t *testing.T) {
@@ -203,8 +203,8 @@ func TestDeleteUser(t *testing.T) {
 			expectedStatusCode: 200,
 			expectedResponse:   `{"message":"Successfully deleted user"}`,
 			setup: func() {
-				clearTable()
-				addUser()
+				clearTable(&app)
+				addUser(&app)
 			},
 		},
 		{
@@ -214,7 +214,7 @@ func TestDeleteUser(t *testing.T) {
 			expectedStatusCode: 404,
 			expectedResponse:   `{"message":"user does not exist"}`,
 			setup: func() {
-				clearTable()
+				clearTable(&app)
 			},
 		},
 		{
@@ -226,7 +226,64 @@ func TestDeleteUser(t *testing.T) {
 		},
 	}
 
-	executeTests(t, testCases)
+	executeTests(t, &app, testCases)
+}
+
+// Check that API returns correctly sanitized error messages when DB is not in good state
+func TestDBErrors(t *testing.T) {
+	// Test setup / arrangement
+
+	// An app with no tables migrated
+	var brokenApp App
+	db := database.Database{}
+	err := db.Connect(&database.Options{UseInMemoryDatabase: true, InMemoryDatabaseName: "broken_app"})
+	if err != nil {
+		log.Fatal("Database failed to connect: " + err.Error())
+	}
+
+	brokenApp.Initialize(&db)
+
+	testCases := []testCase{
+		{
+			description:        "Create user with no users table",
+			method:             "POST",
+			route:              "/api/users",
+			body:               strings.NewReader(`{ "first_name": "John", "last_name": "Doe" }`),
+			expectedStatusCode: 500,
+			expectedResponse:   `{"message":"sorry, something went wrong"}`,
+		},
+		{
+			description:        "Get all users with no users table",
+			method:             "GET",
+			route:              "/api/users",
+			expectedStatusCode: 500,
+			expectedResponse:   `{"message":"sorry, something went wrong"}`,
+		},
+		{
+			description:        "Get user by ID with no users table",
+			method:             "GET",
+			route:              "/api/users/1",
+			expectedStatusCode: 500,
+			expectedResponse:   `{"message":"sorry, something went wrong"}`,
+		},
+		{
+			description:        "Update user with no users table",
+			method:             "PUT",
+			route:              "/api/users/1",
+			body:               strings.NewReader(`{ "last_name": "Bond", "first_name": "James" }`),
+			expectedStatusCode: 500,
+			expectedResponse:   `{"message":"sorry, something went wrong"}`,
+		},
+		{
+			description:        "Delete user with no users table",
+			method:             "DELETE",
+			route:              "/api/users/1",
+			expectedStatusCode: 500,
+			expectedResponse:   `{"message":"sorry, something went wrong"}`,
+		},
+	}
+
+	executeTests(t, &brokenApp, testCases)
 }
 
 // Helper methods
@@ -241,7 +298,7 @@ type testCase struct {
 	setup              func()    // Hook to run a function before the test executes
 }
 
-func executeTest(t *testing.T, test testCase) {
+func executeTest(t *testing.T, application *App, test testCase) {
 	t.Run(fmt.Sprintf("%s - %s", t.Name(), test.description), func(t *testing.T) {
 		// Hook to run a function before the test executes
 		if test.setup != nil {
@@ -253,7 +310,7 @@ func executeTest(t *testing.T, test testCase) {
 
 		// Perform the request against the Fiber app,
 		// with a timeout of 500ms
-		resp, err := app.Fiber.Test(req, 500)
+		resp, err := application.Fiber.Test(req, 500)
 		assert.Nil(t, err, "Fiber.Test returned an error")
 
 		assert.Equalf(t, test.expectedStatusCode, resp.StatusCode, test.description)
@@ -267,18 +324,18 @@ func executeTest(t *testing.T, test testCase) {
 	})
 }
 
-func executeTests(t *testing.T, testCases []testCase) {
+func executeTests(t *testing.T, application *App, testCases []testCase) {
 	// Iterate through test cases
 	for _, test := range testCases {
-		executeTest(t, test)
+		executeTest(t, application, test)
 	}
 }
 
-func clearTable() {
-	app.DB.Conn.Where("id > ?", 0).Delete(&models.User{})
+func clearTable(application *App) {
+	application.DB.Conn.Where("id > ?", 0).Delete(&models.User{})
 }
 
-func addUser() {
+func addUser(application *App) {
 	user := &models.User{FirstName: "John", LastName: "Doe"}
-	app.DB.Conn.Create(user)
+	application.DB.Conn.Create(user)
 }
