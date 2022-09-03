@@ -150,9 +150,9 @@ func TestUpdateUser(t *testing.T) {
 			description:        "Update existing user",
 			method:             "PUT",
 			route:              "/api/users/1",
-			body:               strings.NewReader(`{"first_name":"Larry","last_name":"Rotter"}`),
+			body:               strings.NewReader(`{"first_name":"James","last_name":"Doe"}`),
 			expectedStatusCode: 200,
-			expectedResponse:   `{"id":1,"first_name":"Larry","last_name":"Rotter"}`,
+			expectedResponse:   `{"id":1,"first_name":"James","last_name":"Doe"}`,
 			setup: func() {
 				clearTable()
 				addUser()
@@ -239,7 +239,8 @@ func executeTest(t *testing.T, test testCase) {
 
 	// Perform the request against the Fiber app,
 	// with a timeout of 500ms
-	resp, _ := app.Fiber.Test(req, 500)
+	resp, err := app.Fiber.Test(req, 500)
+	assert.Nil(t, err, "Fiber.Test returned an error")
 
 	assert.Equalf(t, test.expectedStatusCode, resp.StatusCode, test.description)
 
