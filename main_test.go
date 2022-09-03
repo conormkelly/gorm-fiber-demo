@@ -227,7 +227,6 @@ type testCase struct {
 	setup              func()    // Hook to run a function before the test executes
 }
 
-// Helper functions
 func executeTest(t *testing.T, test testCase) {
 	// Hook to run a function before the test executes
 	if test.setup != nil {
