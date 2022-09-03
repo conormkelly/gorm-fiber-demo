@@ -44,13 +44,28 @@ go run .
 
 ## Testing
 
-To test all packages:
+### Approach
+
+The core application tests are:
+
+- Integration tests that operate across all layers of the app, using an in-memory SQLite database.
+- Focused on testing at the feature level - blackbox and less brittle than the unit tests.
+- [Table-driven](https://dave.cheney.net/2019/05/07/prefer-table-driven-tests).
+
+This allows new test cases to be easily added without modifying the existing test methods.
+
+It also utilizes the Go testing feature of [subtests](https://go.dev/blog/subtests), which allows for greater flexibility when using table-driven tests,
+such as [running a specific set of subtests](#running-a-specific-set-of-subtests).
+
+### Execution
+
+#### To test all packages
 
 ```sh
 go test ./...
 ```
 
-To view overall coverage percentage:
+#### To view overall coverage percentage
 
 ```sh
 go test -v -coverpkg=./... -coverprofile=profile.cov ./...
@@ -58,7 +73,7 @@ go tool cover -func profile.cov
 
 ```
 
-Generating code coverage HTML:
+#### Generating code coverage HTML
 
 ```sh
  go test -covermode=set -coverpkg=./... -coverprofile coverage.out -v ./...
@@ -66,6 +81,20 @@ Generating code coverage HTML:
 ```
 
 It may be helpful to add these commands as functions in `~/.bash_profile`.
+
+#### Running a test suite
+
+```sh
+go test -run=TestGetUser
+```
+
+#### Running a specific set of subtests
+
+```sh
+# The contents in quotes are matched against test case description e.g.
+# in this case, the "Get all users when table is empty" subtest
+go test -run=TestGetAllUsers/"table is empty"
+```
 
 ## Todo
 
