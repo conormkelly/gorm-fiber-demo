@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Quick sanity check for the package
 func TestInMemoryDB(t *testing.T) {
 	db := Database{}
 	modelsToMigrate := []interface{}{&models.User{}}
