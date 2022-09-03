@@ -14,9 +14,10 @@ type Database struct {
 }
 
 type Options struct {
-	UseInMemoryDatabase bool
-	SQLitePath          *string
-	ModelsToMigrate     []interface{}
+	UseInMemoryDatabase  bool
+	InMemoryDatabaseName string
+	SQLitePath           *string
+	ModelsToMigrate      []interface{}
 }
 
 func (dbInstance *Database) Connect(options *Options) error {
@@ -24,7 +25,11 @@ func (dbInstance *Database) Connect(options *Options) error {
 	var err error
 
 	if options.UseInMemoryDatabase {
-		db, err = gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
+		connectionString := "file::memory:?cache=shared"
+		if options.InMemoryDatabaseName != "" {
+			connectionString = "file:" + options.InMemoryDatabaseName + "?mode=memory&cache=shared"
+		}
+		db, err = gorm.Open(sqlite.Open(connectionString), &gorm.Config{})
 	} else if options.SQLitePath != nil {
 		db, err = gorm.Open(sqlite.Open(*options.SQLitePath), &gorm.Config{})
 	} else {
