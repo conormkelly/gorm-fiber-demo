@@ -32,13 +32,12 @@ func TestMissingConnectionString(t *testing.T) {
 
 func TestInvalidConnectionString(t *testing.T) {
 	db := Database{}
-	connectionString := "?"
+	connectionString := "/;"
 	err := db.Connect(&Options{
 		DatabaseType:     SQLite,
 		ConnectionString: &connectionString,
 	})
 	assert.NotNil(t, err, "Expected an error but got none")
-	assert.Equal(t, "unable to open database file: The filename, directory name, or volume label syntax is incorrect.", err.Error())
 }
 
 func TestUndefinedDatabaseType(t *testing.T) {
