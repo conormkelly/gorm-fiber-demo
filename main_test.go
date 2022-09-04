@@ -12,6 +12,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/conormkelly/fiber-demo/database"
 	"github.com/conormkelly/fiber-demo/models"
 )
 
@@ -19,11 +20,13 @@ var app App
 
 // Create an in-memory SQLite DB for testing purposes.
 func TestMain(m *testing.M) {
+	connectionString := "file:main_app?mode=memory&cache=shared"
+
 	options := &Options{
-		UseInMemoryDatabase:  true,
-		InMemoryDatabaseName: "main_app",
-		ModelsToMigrate:      []interface{}{&models.User{}},
-		Port:                 nil,
+		DatabaseType:     database.SQLite,
+		ConnectionString: &connectionString,
+		ModelsToMigrate:  []interface{}{&models.User{}},
+		Port:             nil,
 		// Port is nil by default anyway, but I've explicitly valued it here
 		// purely for demo purposes and visibiility into the fact
 		// that a live instance of the app isnt used in the tests
@@ -238,13 +241,14 @@ func TestDeleteUser(t *testing.T) {
 // Check that API returns correctly sanitized error messages when DB is not in good state
 func TestDBErrors(t *testing.T) {
 	// Test setup / arrangement
+	connectionString := "file:broken_app?mode=memory&cache=shared"
 
 	// An app with no tables migrated
 
 	brokenApp := App{Options: &Options{
-		UseInMemoryDatabase:  true,
-		InMemoryDatabaseName: "broken_app",
-		Port:                 nil,
+		DatabaseType:     database.SQLite,
+		ConnectionString: &connectionString,
+		Port:             nil,
 		// deliberately not passing models to auto-migrate
 	}}
 	brokenApp.Initialize()
@@ -294,9 +298,9 @@ func TestDBErrors(t *testing.T) {
 
 // Confirms that starting up DB with bad config state doesnt work
 func TestDBConfigErrors(t *testing.T) {
-	// An app thats not in-memory SQLite but with no config specified
 	brokenApp := App{Options: &Options{
-		UseInMemoryDatabase: false,
+		DatabaseType:     database.SQLite,
+		ConnectionString: nil,
 	}}
 	err := brokenApp.Initialize()
 	assert.NotNil(t, err, "Expected an error but didn't get one.")

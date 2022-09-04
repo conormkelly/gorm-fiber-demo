@@ -14,26 +14,33 @@ type Database struct {
 }
 
 type Options struct {
-	UseInMemoryDatabase  bool
-	InMemoryDatabaseName string
-	SQLitePath           *string
-	ModelsToMigrate      []interface{}
+	ConnectionString *string
+	DatabaseType     DatabaseType
+	ModelsToMigrate  []interface{}
 }
+
+// SQLite, MySQL etc
+type DatabaseType int32
+
+const (
+	Undefined DatabaseType = iota
+	SQLite
+	// MySQL
+)
 
 func (dbInstance *Database) Connect(options *Options) error {
 	var db *gorm.DB
 	var err error
 
-	if options.UseInMemoryDatabase {
-		connectionString := "file::memory:?cache=shared"
-		if options.InMemoryDatabaseName != "" {
-			connectionString = "file:" + options.InMemoryDatabaseName + "?mode=memory&cache=shared"
-		}
-		db, err = gorm.Open(sqlite.Open(connectionString), &gorm.Config{})
-	} else if options.SQLitePath != nil {
-		db, err = gorm.Open(sqlite.Open(*options.SQLitePath), &gorm.Config{})
-	} else {
-		return errors.New("invalid DB config provided")
+	if options.ConnectionString == nil {
+		return errors.New("no ConnectionString was provided")
+	}
+
+	switch options.DatabaseType {
+	case Undefined:
+		return errors.New("no DatabaseType was specified")
+	case SQLite:
+		db, err = gorm.Open(sqlite.Open(*options.ConnectionString), &gorm.Config{})
 	}
 
 	if err != nil {

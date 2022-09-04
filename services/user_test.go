@@ -59,7 +59,12 @@ func TestDatabaseDown(t *testing.T) {
 	// Test setup / arrangement
 	db := database.Database{}
 	modelsToMigrate := []interface{}{&models.User{}}
-	err := db.Connect(&database.Options{UseInMemoryDatabase: true, ModelsToMigrate: modelsToMigrate})
+	connectionString := "file:user_service_test?mode=memory&cache=shared"
+	err := db.Connect(&database.Options{
+		DatabaseType:     database.SQLite,
+		ConnectionString: &connectionString,
+		ModelsToMigrate:  modelsToMigrate,
+	})
 	if err != nil {
 		log.Fatal("Database failed to connect: " + err.Error())
 	}
@@ -122,7 +127,12 @@ func TestNonExistentTable(t *testing.T) {
 	// Test setup / arrangement
 	// Creating a DB without any tables
 	db := database.Database{}
-	err := db.Connect(&database.Options{UseInMemoryDatabase: true})
+	connectionString := "file:user_test_no_tables?mode=memory&cache=shared"
+
+	err := db.Connect(&database.Options{
+		DatabaseType:     database.SQLite,
+		ConnectionString: &connectionString,
+	})
 	if err != nil {
 		log.Fatal("Database failed to connect: " + err.Error())
 	}

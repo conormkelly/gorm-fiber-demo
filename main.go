@@ -10,13 +10,11 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// (? = conditionally required, - = optional)
 type Options struct {
-	ConnectionString     *string       // (?) For now, just a SQLite conn string but should be considered as prod conn
-	ModelsToMigrate      []interface{} // (-) The models that should be migrated
-	UseInMemoryDatabase  bool          // (?, default: false) For testing purposes
-	InMemoryDatabaseName string        // (?, default: "") Having different names allows for greater flexibility in terms of parallelism etc
-	Port                 *string       // (-) If not supplied, the app wont actually listen
+	DatabaseType     database.DatabaseType // SQLite, MySQL etc. Only SQLite is currently supported.
+	ConnectionString *string               // The path to the DB e.g. "file::memory:?cache=shared"
+	ModelsToMigrate  []interface{}         // (optional) The models that should be migrated
+	Port             *string               // (optional) If not supplied, the app wont actually listen
 }
 
 type App struct {
@@ -31,10 +29,9 @@ func (app *App) Initialize() error {
 	db := &database.Database{}
 
 	dbOptions := &database.Options{
-		UseInMemoryDatabase:  app.Options.UseInMemoryDatabase,
-		InMemoryDatabaseName: app.Options.InMemoryDatabaseName,
-		SQLitePath:           app.Options.ConnectionString,
-		ModelsToMigrate:      app.Options.ModelsToMigrate,
+		DatabaseType:     app.Options.DatabaseType,
+		ConnectionString: app.Options.ConnectionString,
+		ModelsToMigrate:  app.Options.ModelsToMigrate,
 	}
 
 	err := db.Connect(dbOptions)
@@ -87,14 +84,15 @@ func (app *App) initializeRoutes() {
 
 func main() {
 	// TODO: get actual config from env / Viper
+	dbType := database.SQLite
 	connectionString := "./database/test.db"
 	port := ":3000"
 
 	options := Options{
-		UseInMemoryDatabase: false,
-		ConnectionString:    &connectionString,
-		ModelsToMigrate:     []interface{}{&models.User{}},
-		Port:                &port,
+		DatabaseType:     dbType,
+		ConnectionString: &connectionString,
+		ModelsToMigrate:  []interface{}{&models.User{}},
+		Port:             &port,
 	}
 
 	app := &App{Options: &options}
