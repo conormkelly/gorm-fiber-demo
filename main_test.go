@@ -12,7 +12,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/conormkelly/fiber-demo/database"
 	"github.com/conormkelly/fiber-demo/models"
 )
 
@@ -20,15 +19,22 @@ var app App
 
 // Create an in-memory SQLite DB for testing purposes.
 func TestMain(m *testing.M) {
-	db := database.Database{}
-	modelsToMigrate := []interface{}{&models.User{}}
-	err := db.Connect(&database.Options{UseInMemoryDatabase: true, InMemoryDatabaseName: "main_app", ModelsToMigrate: modelsToMigrate})
-	if err != nil {
-		log.Fatal("Database failed to connect: " + err.Error())
+	options := &Options{
+		UseInMemoryDatabase:  true,
+		InMemoryDatabaseName: "main_app",
+		ModelsToMigrate:      []interface{}{&models.User{}},
+		Port:                 nil,
+		// Port is nil by default anyway, but I've explicitly valued it here
+		// purely for demo purposes and visibiility into the fact
+		// that a live instance of the app isnt used in the tests
 	}
 
-	app.Initialize(&db)
+	app = App{Options: options}
 
+	err := app.Initialize()
+	if err != nil {
+		log.Fatal("App failed to start: " + err.Error())
+	}
 	code := m.Run()
 	os.Exit(code)
 }
@@ -234,14 +240,14 @@ func TestDBErrors(t *testing.T) {
 	// Test setup / arrangement
 
 	// An app with no tables migrated
-	var brokenApp App
-	db := database.Database{}
-	err := db.Connect(&database.Options{UseInMemoryDatabase: true, InMemoryDatabaseName: "broken_app"})
-	if err != nil {
-		log.Fatal("Database failed to connect: " + err.Error())
-	}
 
-	brokenApp.Initialize(&db)
+	brokenApp := App{Options: &Options{
+		UseInMemoryDatabase:  true,
+		InMemoryDatabaseName: "broken_app",
+		Port:                 nil,
+		// deliberately not passing models to auto-migrate
+	}}
+	brokenApp.Initialize()
 
 	testCases := []testCase{
 		{
@@ -284,6 +290,16 @@ func TestDBErrors(t *testing.T) {
 	}
 
 	executeTests(t, &brokenApp, testCases)
+}
+
+// Confirms that starting up DB with bad config state doesnt work
+func TestDBConfigErrors(t *testing.T) {
+	// An app thats not in-memory SQLite but with no config specified
+	brokenApp := App{Options: &Options{
+		UseInMemoryDatabase: false,
+	}}
+	err := brokenApp.Initialize()
+	assert.NotNil(t, err, "Expected an error but didn't get one.")
 }
 
 // Helper methods

@@ -10,13 +10,39 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type App struct {
-	Fiber *fiber.App
-	DB    *database.Database
+// (? = conditionally required, - = optional)
+type Options struct {
+	ConnectionString     *string       // (?) For now, just a SQLite conn string but should be considered as prod conn
+	ModelsToMigrate      []interface{} // (-) The models that should be migrated
+	UseInMemoryDatabase  bool          // (?, default: false) For testing purposes
+	InMemoryDatabaseName string        // (?, default: "") Having different names allows for greater flexibility in terms of parallelism etc
+	Port                 *string       // (-) If not supplied, the app wont actually listen
 }
 
-func (app *App) Initialize(db *database.Database) {
+type App struct {
+	Options *Options
+	Fiber   *fiber.App
+	DB      *database.Database
+}
+
+// Creates DB connection based on supplied config,
+// sets up routes and listens if the port was supplied.
+func (app *App) Initialize() error {
+	db := &database.Database{}
+
+	dbOptions := &database.Options{
+		UseInMemoryDatabase:  app.Options.UseInMemoryDatabase,
+		InMemoryDatabaseName: app.Options.InMemoryDatabaseName,
+		SQLitePath:           app.Options.ConnectionString,
+		ModelsToMigrate:      app.Options.ModelsToMigrate,
+	}
+
+	err := db.Connect(dbOptions)
+	if err != nil {
+		return err
+	}
 	app.DB = db
+
 	// Create a new fiber instance with custom config
 	fiberApp := fiber.New(fiber.Config{
 		// Override default error handler
@@ -41,6 +67,12 @@ func (app *App) Initialize(db *database.Database) {
 	app.Fiber = fiberApp
 
 	app.initializeRoutes()
+
+	if app.Options.Port != nil {
+		log.Fatal(app.Fiber.Listen(*app.Options.Port))
+	}
+
+	return nil
 }
 
 func (app *App) initializeRoutes() {
@@ -54,16 +86,21 @@ func (app *App) initializeRoutes() {
 }
 
 func main() {
-	db := &database.Database{}
+	// TODO: get actual config from env / Viper
 	connectionString := "./database/test.db"
-	modelsToMigrate := []interface{}{&models.User{}}
-	err := db.Connect(&database.Options{SQLitePath: &connectionString, ModelsToMigrate: modelsToMigrate})
-	if err != nil {
-		log.Fatal("Database failed to connect: " + err.Error())
+	port := ":3000"
+
+	options := Options{
+		UseInMemoryDatabase: false,
+		ConnectionString:    &connectionString,
+		ModelsToMigrate:     []interface{}{&models.User{}},
+		Port:                &port,
 	}
 
-	app := &App{}
-	app.Initialize(db)
+	app := &App{Options: &options}
 
-	log.Fatal(app.Fiber.Listen(":3000"))
+	err := app.Initialize()
+	if err != nil {
+		log.Fatal("Failed to init app: " + err.Error())
+	}
 }
