@@ -6,6 +6,7 @@
 /database/test.db
 
 # Test artefacts
+__debug_bin*
 coverage.out
 coverage.html
 profile.cov
