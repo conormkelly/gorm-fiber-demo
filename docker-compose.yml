@@ -8,11 +8,11 @@ services:
       APP_RUN_AUTO_MIGRATE: "true"
     container_name: go_api
     build: .
-    restart: on-failure # temp til I figure out the temporal dependency between this svc and the DB
     volumes:
       - api:/usr/src/app/
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     ports:
       - 3000:3000
   mysql:
@@ -29,11 +29,10 @@ services:
     volumes:
       - database_mysql:/var/lib/mysql
     healthcheck:
-        test: "/usr/bin/mysql --user=root --password=rootpassword --execute \"SHOW DATABASES;\""
-        interval: 2s
-        timeout: 20s
-        retries: 10
-
+      test: "/usr/bin/mysql --user=root --password=rootpassword --execute \"SHOW DATABASES;\""
+      interval: 1s
+      timeout: 5s
+      retries: 60
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     container_name: phpmyadmin_container
