@@ -1,0 +1,53 @@
+version: '3'
+services:
+  api:
+    environment:
+      APP_DB_TYPE: MYSQL
+      APP_DB_CONN_STRING: "user:password@tcp(mysql:3306)/go_app?charset=utf8&parseTime=true"
+      APP_PORT: ":3000"
+      APP_RUN_AUTO_MIGRATE: "true"
+    container_name: go_api
+    build: .
+    restart: on-failure # temp til I figure out the temporal dependency between this svc and the DB
+    volumes:
+      - api:/usr/src/app/
+    depends_on:
+      - mysql
+    ports:
+      - 3000:3000
+  mysql:
+    image: mysql:8.0
+    container_name: full_db_mysql
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_HOST: "mysql"
+      MYSQL_USER: "user"
+      MYSQL_PASSWORD: "password"
+      MYSQL_DATABASE: "go_app"
+      MYSQL_ROOT_PASSWORD: "rootpassword"
+    volumes:
+      - database_mysql:/var/lib/mysql
+    healthcheck:
+        test: "/usr/bin/mysql --user=root --password=rootpassword --execute \"SHOW DATABASES;\""
+        interval: 2s
+        timeout: 20s
+        retries: 10
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin_container
+    depends_on:
+      - mysql
+    environment:
+      PMA_HOST: "mysql"
+      PMA_USER: "user"
+      PMA_PORT: 3306
+      PMA_PASSWORD: "password"
+    ports:
+      - 9090:80
+    restart: always
+
+volumes:
+  api:
+  database_mysql:
