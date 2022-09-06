@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 
+	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -25,7 +26,7 @@ type DatabaseType int32
 const (
 	Undefined DatabaseType = iota
 	SQLite
-	// MySQL
+	MySQL
 )
 
 func (dbInstance *Database) Connect(options *Options) error {
@@ -41,6 +42,8 @@ func (dbInstance *Database) Connect(options *Options) error {
 		return errors.New("no DatabaseType was specified")
 	case SQLite:
 		db, err = gorm.Open(sqlite.Open(*options.ConnectionString), &gorm.Config{})
+	case MySQL:
+		db, err = gorm.Open(mysql.Open(*options.ConnectionString), &gorm.Config{})
 	}
 
 	if err != nil {

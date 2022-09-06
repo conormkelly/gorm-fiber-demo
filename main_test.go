@@ -34,7 +34,7 @@ func TestMain(m *testing.M) {
 
 	app = App{Options: options}
 
-	err := app.Initialize()
+	err := app.Initialize(nil)
 	if err != nil {
 		log.Fatal("App failed to start: " + err.Error())
 	}
@@ -251,7 +251,7 @@ func TestDBErrors(t *testing.T) {
 		Port:             nil,
 		// deliberately not passing models to auto-migrate
 	}}
-	brokenApp.Initialize()
+	brokenApp.Initialize(nil)
 
 	testCases := []testCase{
 		{
@@ -302,7 +302,7 @@ func TestDBConfigErrors(t *testing.T) {
 		DatabaseType:     database.SQLite,
 		ConnectionString: nil,
 	}}
-	err := brokenApp.Initialize()
+	err := brokenApp.Initialize(nil)
 	assert.NotNil(t, err, "Expected an error but didn't get one.")
 }
 

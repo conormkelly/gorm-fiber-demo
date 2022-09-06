@@ -1,13 +1,16 @@
 package main
 
 import (
+	"errors"
 	"log"
+	"os"
 
 	"github.com/conormkelly/fiber-demo/controllers"
 	"github.com/conormkelly/fiber-demo/database"
 	"github.com/conormkelly/fiber-demo/models"
 	"github.com/conormkelly/fiber-demo/services"
 	"github.com/gofiber/fiber/v2"
+	"github.com/hashicorp/go-multierror"
 )
 
 type Options struct {
@@ -25,7 +28,11 @@ type App struct {
 
 // Creates DB connection based on supplied config,
 // sets up routes and listens if the port was supplied.
-func (app *App) Initialize() error {
+func (app *App) Initialize(configError error) error {
+	if configError != nil {
+		return configError
+	}
+
 	db := &database.Database{}
 
 	dbOptions := &database.Options{
@@ -82,23 +89,60 @@ func (app *App) initializeRoutes() {
 	app.Fiber.Delete("/api/users/:id", usersController.DeleteUser)
 }
 
-func main() {
-	// TODO: get actual config from env / Viper
-	dbType := database.SQLite
-	connectionString := "./database/test.db"
-	port := ":3000"
+// Reads and validate environment variable config
+func ReadEnvironmentConfig() (*Options, error) {
+	options := Options{}
+	var result error
 
-	options := Options{
-		DatabaseType:     dbType,
-		ConnectionString: &connectionString,
-		ModelsToMigrate:  []interface{}{&models.User{}},
-		Port:             &port,
+	// Determine DB type
+	dbTypeString := os.Getenv("APP_DB_TYPE")
+	dbType := database.Undefined
+
+	switch {
+	case dbTypeString == "":
+		err := errors.New(`APP_DB_TYPE should be one of: ["MYSQL", "SQLITE"]`)
+		result = multierror.Append(result, err)
+	case dbTypeString == "MYSQL":
+		dbType = database.MySQL
+	case dbTypeString == "SQLITE":
+		dbType = database.SQLite
+	}
+	options.DatabaseType = dbType
+
+	// Get connection string
+	dbConnectionString := os.Getenv("APP_DB_CONN_STRING")
+	if dbConnectionString == "" {
+		err := errors.New("APP_DB_CONN_STRING is required")
+		result = multierror.Append(result, err)
+		options.ConnectionString = nil
+	} else {
+		options.ConnectionString = &dbConnectionString
 	}
 
-	app := &App{Options: &options}
+	// Get port
+	port := os.Getenv("APP_PORT")
+	if port == "" {
+		err := errors.New("APP_PORT is required")
+		result = multierror.Append(result, err)
+		options.Port = nil
+	} else {
+		options.Port = &port
+	}
 
-	err := app.Initialize()
+	// Check if we should run migrations
+	shouldRunMigrations := os.Getenv("APP_RUN_AUTO_MIGRATE")
+	if shouldRunMigrations == "true" {
+		options.ModelsToMigrate = []interface{}{&models.User{}}
+	}
+
+	return &options, result
+}
+
+func main() {
+	options, configError := ReadEnvironmentConfig()
+	app := &App{Options: options}
+	err := app.Initialize(configError)
 	if err != nil {
-		log.Fatal("Failed to init app: " + err.Error())
+		log.Fatal("Failed to start app: " + err.Error())
 	}
 }
