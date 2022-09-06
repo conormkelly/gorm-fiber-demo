@@ -106,4 +106,3 @@ go test -run=TestGetAllUsers/"table is empty"
 
 - Look into validation frameworks (similar to AJV etc)
 - Swagger integration
-
