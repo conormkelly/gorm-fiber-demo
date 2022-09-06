@@ -107,4 +107,3 @@ go test -run=TestGetAllUsers/"table is empty"
 - Look into validation frameworks (similar to AJV etc)
 - Swagger integration
 
-<!-- Docker Tutorial: <https://linuxtut.com/en/c8f9df8defc937e185ee/> -->
