@@ -1,23 +1,23 @@
 version: '3'
 services:
-  api:
+  my-go-api:
     environment:
       APP_DB_TYPE: MYSQL
-      APP_DB_CONN_STRING: "user:password@tcp(mysql:3306)/go_app?charset=utf8&parseTime=true"
+      APP_DB_CONN_STRING: "user:password@tcp(my-mysql-db:3306)/go_app?charset=utf8&parseTime=true"
       APP_PORT: ":3000"
       APP_RUN_AUTO_MIGRATE: "true"
-    container_name: go_api
+    container_name: api
     build: .
     volumes:
       - api:/usr/src/app/
     depends_on:
-      mysql:
+      my-mysql-db:
         condition: service_healthy
     ports:
       - 3000:3000
-  mysql:
+  my-mysql-db:
     image: mysql:8.0
-    container_name: full_db_mysql
+    container_name: db
     ports:
       - 3306:3306
     environment:
@@ -35,9 +35,10 @@ services:
       retries: 60
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
-    container_name: phpmyadmin_container
+    container_name: phpmyadmin
     depends_on:
-      - mysql
+      my-mysql-db:
+        condition: service_healthy
     environment:
       PMA_HOST: "mysql"
       PMA_USER: "user"
