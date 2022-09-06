@@ -9,7 +9,13 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${fileDirname}"
+            "program": "${fileDirname}",
+            "env": {
+                "APP_DB_TYPE": "SQLITE",
+                "APP_DB_CONN_STRING": "file:debugging_app?mode=memory&cache=shared",
+                "APP_PORT": ":3000",
+                "APP_RUN_AUTO_MIGRATE": "true"
+            }
         }
     ]
 }
