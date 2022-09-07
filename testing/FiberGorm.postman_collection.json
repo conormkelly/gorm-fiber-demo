@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "9c3aaca7-8d9a-4e13-9fc8-8fbb37254d06",
-		"name": "Fiber Gorm",
+		"_postman_id": "41a86cd6-b7d0-4d86-a369-d4ef94c9ce92",
+		"name": "FiberGorm",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -20,12 +20,11 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:3000/api/users",
+					"raw": "http://{{baseUrl}}/api/users",
 					"protocol": "http",
 					"host": [
-						"localhost"
+						"{{baseUrl}}"
 					],
-					"port": "3000",
 					"path": [
 						"api",
 						"users"
@@ -40,12 +39,11 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:3000/api/users",
+					"raw": "http://{{baseUrl}}/api/users",
 					"protocol": "http",
 					"host": [
-						"localhost"
+						"{{baseUrl}}"
 					],
-					"port": "3000",
 					"path": [
 						"api",
 						"users"
@@ -60,12 +58,11 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:3000/api/users/1",
+					"raw": "http://{{baseUrl}}/api/users/1",
 					"protocol": "http",
 					"host": [
-						"localhost"
+						"{{baseUrl}}"
 					],
-					"port": "3000",
 					"path": [
 						"api",
 						"users",
@@ -90,12 +87,11 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:3000/api/users/2",
+					"raw": "http://{{baseUrl}}/api/users/2",
 					"protocol": "http",
 					"host": [
-						"localhost"
+						"{{baseUrl}}"
 					],
-					"port": "3000",
 					"path": [
 						"api",
 						"users",
@@ -111,12 +107,11 @@
 				"method": "DELETE",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:3000/api/users/2",
+					"raw": "http://{{baseUrl}}/api/users/2",
 					"protocol": "http",
 					"host": [
-						"localhost"
+						"{{baseUrl}}"
 					],
-					"port": "3000",
 					"path": [
 						"api",
 						"users",

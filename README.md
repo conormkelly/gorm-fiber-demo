@@ -106,3 +106,9 @@ go test -run=TestGetAllUsers/"table is empty"
 
 - Look into validation frameworks (similar to AJV etc)
 - Swagger integration
+
+## Resources
+
+- Great primer on using Docker + Newman together
+
+  <https://www.wwt.com/article/postman-api-tests-collection-run-with-docker-compose>

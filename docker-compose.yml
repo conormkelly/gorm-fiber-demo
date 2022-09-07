@@ -33,6 +33,16 @@ services:
       interval: 1s
       timeout: 5s
       retries: 60
+  newman:
+    image: postman/newman:alpine
+    container_name: postman_tests
+    command:
+      run ./FiberGorm.postman_collection.json -k -r cli -e DOCKER.postman_environment.json
+    volumes:
+      - ./testing:/etc/newman
+    depends_on:
+      - my-go-api
+      - my-mysql-db
   # phpmyadmin:
   #   image: phpmyadmin/phpmyadmin
   #   container_name: phpmyadmin
