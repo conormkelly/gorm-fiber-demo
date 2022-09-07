@@ -1,56 +1,52 @@
 const newman = require('newman')
 const { execSync, spawn } = require('child_process')
 
-// CONFIG
-process.env.APP_PORT = ':3000'
-process.env.APP_DB_TYPE = 'SQLITE'
-process.env.APP_DB_CONN_STRING = 'file:e2e_app?mode=memory&cache=shared'
-process.env.APP_RUN_AUTO_MIGRATE = 'true'
-
-const APP_EXECUTABLE =
-  process.platform === 'win32' ? 'fiber-demo.exe' : 'fiber-demo'
-
-const STARTUP_TIMEOUT_MS = 30000
-
+const SCRIPT_TIMEOUT_MS = 30000
 
 async function main() {
   console.time('Time taken')
 
-  // Build the app
-  console.log('RUNNING: BUILD')
-  execSync('go build', { encoding: 'utf-8' })
-
-  // Create a subprocess of the app
-  const app = spawn('./' + APP_EXECUTABLE)
+  // Create a subprocess of the docker-compose process
+  console.log('RUNNING: docker-compose-up')
+  const dockerProcess = spawn('docker-compose', ['up'])
 
   // Set a timer in case app doesn't start successfully
   const startupTimer = setTimeout(() => {
     console.error(
-      `\nFAILED: app startup took greater than ${STARTUP_TIMEOUT_MS} ms`
+      `\nFAILED: app startup took greater than ${SCRIPT_TIMEOUT_MS} ms`
     )
-    app.kill()
-  }, STARTUP_TIMEOUT_MS)
+    try {
+      execSync('docker-compose down')
+    } catch (err) {
+      console.log('ERROR: Failed to run docker-compose down')
+      dockerProcess.kill()
+    }
+  }, SCRIPT_TIMEOUT_MS)
 
   // Wait for Fiber to start
-  app.stdout.on('data', async (chunk) => {
+  dockerProcess.stdout.on('data', async (chunk) => {
     const output = chunk.toString('utf-8')
-    // console.log(output)
+    console.log(output)
     if (output.includes('bound on')) {
       clearTimeout(startupTimer)
       console.log('APP: READY')
       await executePostmanCollection('./Fiber_Gorm.postman_collection.json')
-      app.kill()
+      try {
+        execSync('docker-compose down')
+      } catch (err) {
+        console.log('ERROR: Failed to run docker-compose down')
+        dockerProcess.kill()        
+      }
+      process.exit(0)
     }
   })
 
-  app.on('error', (err) => {
-    console.log('on.error')
-
+  dockerProcess.on('error', (err) => {
     console.log('ERROR:', err)
     process.exit(1)
   })
 
-  app.on('exit', (code, signal) => {
+  dockerProcess.on('exit', (code, signal) => {
     console.log(`App exited with code ${code} and signal ${signal}`)
     console.timeEnd('Time taken')
     clearTimeout(startupTimer)
