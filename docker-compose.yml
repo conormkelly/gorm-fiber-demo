@@ -33,20 +33,20 @@ services:
       interval: 1s
       timeout: 5s
       retries: 60
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    container_name: phpmyadmin
-    depends_on:
-      my-mysql-db:
-        condition: service_healthy
-    environment:
-      PMA_HOST: "mysql"
-      PMA_USER: "user"
-      PMA_PORT: 3306
-      PMA_PASSWORD: "password"
-    ports:
-      - 9090:80
-    restart: always
+  # phpmyadmin:
+  #   image: phpmyadmin/phpmyadmin
+  #   container_name: phpmyadmin
+  #   depends_on:
+  #     my-mysql-db:
+  #       condition: service_healthy
+  #   environment:
+  #     PMA_HOST: "mysql"
+  #     PMA_USER: "user"
+  #     PMA_PORT: 3306
+  #     PMA_PASSWORD: "password"
+  #   ports:
+  #     - 9090:80
+  #   restart: always
 
 volumes:
   api:
