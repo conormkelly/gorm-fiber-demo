@@ -2,21 +2,32 @@
 
 # Setup
 
-## Installing Dependencies
+## Pre-requisites
 
-```sh
-go get ./...
-```
+- Golang (>= v1.18) installed
 
-## Dev Tools
+  ```sh
+  # Install project dependencies
+  go get ./...
+  ```
+
+- Docker installed
+
+## Optional Dev Tools
 
 ### Hot-reloading via Air
 
-It is optional but highly recommended to install _Air_, which allows for hot-reloading on file changes for improved developer experience.
+It is optional but highly recommended to install _Air_, which is similar to Nodemon and allows for hot-reloading on file changes for improved developer experience.
 
 There are 2 ways to install it.
 
-1. Manually
+1. As a Go module (requires Go 1.16+)
+
+   ```sh
+   go install github.com/cosmtrek/air@latest
+   ```
+
+2. Manually
 
    ```sh
    # binary will be $(go env GOPATH)/bin/air
@@ -24,12 +35,6 @@ There are 2 ways to install it.
 
    # or install it into ./bin/
    curl -sSfL https://raw.githubusercontent.com/cosmtrek/air/master/install.sh | sh -s
-   ```
-
-2. As a Go module (requires Go 1.16+)
-
-   ```sh
-   go install github.com/cosmtrek/air@latest
    ```
 
 Confirm installation by running:
@@ -46,13 +51,34 @@ air
 
 # Otherwise:
 go run .
+
+# or via Docker
+docker-compose up
 ```
 
 ## Testing
 
-### Approach
+### Application / API testing
 
-The core application tests are:
+The below script will start containers for the services outlined in `docker-compose.yml`:
+
+- Golang API
+- MySQL DB
+- Newman (Postman test runner)
+
+To execute it, make sure you have Docker installed and run:
+
+```sh
+./testing/test.sh
+```
+
+This will output the results of the Postman test and bring down the containers.
+
+_Note: No actual collection tests are in place yet._
+
+### Unit / integration testing
+
+The core tests are:
 
 - Integration tests that operate across all layers of the app, using an in-memory SQLite database.
 - Focused on testing at the feature level - blackbox and less brittle than the unit tests.
@@ -63,7 +89,9 @@ This allows new test cases to be easily added without modifying the existing tes
 It also utilizes the Go testing feature of [subtests](https://go.dev/blog/subtests), which allows for greater flexibility when using table-driven tests,
 such as [running a specific set of subtests](#running-a-specific-set-of-subtests).
 
-### Execution
+### Handy test commands
+
+It may be helpful to add these commands as functions in `~/.bash_profile`.
 
 #### To test all packages
 
@@ -85,8 +113,6 @@ go tool cover -func profile.cov
  go test -covermode=set -coverpkg=./... -coverprofile coverage.out -v ./...
  go tool cover -html coverage.out -o coverage.html
 ```
-
-It may be helpful to add these commands as functions in `~/.bash_profile`.
 
 #### Running a test suite
 
