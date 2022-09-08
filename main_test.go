@@ -38,6 +38,40 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+func TestGetAppOptions(t *testing.T) {
+	type optionsTest struct {
+		description   string // Description of the test case
+		expectedError bool
+	}
+
+	// TODO: add test cases for when valued
+	testCases := []optionsTest{
+		{
+			description:   "Blank APP_DB_CONN_STRING is invalid",
+			expectedError: true,
+		},
+		{
+			description:   "Blank APP_PORT is invalid",
+			expectedError: true,
+		},
+		{
+			description:   "Blank APP_RUN_AUTO_MIGRATE is invalid",
+			expectedError: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(fmt.Sprintf("%s - %s", t.Name(), test.description), func(t *testing.T) {
+			// TODO: cross check result also
+			_, err := GetAppOptions()
+
+			if test.expectedError {
+				assert.NotNil(t, err, test.description)
+			}
+		})
+	}
+}
+
 func Test404Handler(t *testing.T) {
 	test := testCase{
 		description:        "Test non-existent route",
