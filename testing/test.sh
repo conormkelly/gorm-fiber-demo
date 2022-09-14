@@ -1,5 +1,5 @@
 #!/bin/bash
 
-docker-compose up -d && sleep 0.5
+docker-compose up -d && sleep 0.5 # increase sleep timeout if not seeing postman tests in logs
 docker-compose logs newman
 docker-compose down
