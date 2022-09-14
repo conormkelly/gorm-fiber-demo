@@ -6,9 +6,12 @@ services:
       APP_PORT: ":3000"
       APP_RUN_AUTO_MIGRATE: "true"
     container_name: api
-    build: .
+    build:
+      dockerfile: Dockerfile
+      context: .
+      target: dev
     volumes:
-      - api:/usr/src/app/
+      - .:/opt/app/api
     depends_on:
       my-mysql-db:
         condition: service_healthy
@@ -35,6 +38,8 @@ services:
   newman:
     image: postman/newman:alpine
     container_name: postman_tests
+    profiles:
+      - tests
     command:
       run ./FiberGorm.postman_collection.json -k -r cli -e DOCKER.postman_environment.json
     volumes:
@@ -42,21 +47,22 @@ services:
     depends_on:
       - my-go-api
       - my-mysql-db
-  # phpmyadmin:
-  #   image: phpmyadmin/phpmyadmin
-  #   container_name: phpmyadmin
-  #   depends_on:
-  #     my-mysql-db:
-  #       condition: service_healthy
-  #   environment:
-  #     PMA_HOST: "mysql"
-  #     PMA_USER: "user"
-  #     PMA_PORT: 3306
-  #     PMA_PASSWORD: "password"
-  #   ports:
-  #     - 9090:80
-  #   restart: always
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    profiles:
+      - tools
+    depends_on:
+      my-mysql-db:
+        condition: service_healthy
+    environment:
+      PMA_HOST: "mysql"
+      PMA_USER: "user"
+      PMA_PORT: 3306
+      PMA_PASSWORD: "password"
+    ports:
+      - 9090:80
+    restart: always
 
 volumes:
-  api:
   database_mysql:

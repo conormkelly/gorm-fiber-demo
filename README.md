@@ -1,25 +1,37 @@
 # Go Fiber Demo
 
+## Intro
+
+This Go app is a basic crud API written in a similar style to Express using Fiber.
+By no means am I an expert in Go, so take the actual coding style with a pinch of salt.
+
+Having said that, it is intended to demonstrate testing and Dockerized testing approaches:
+
+- [Table-driven](#unit--integration-testing) unit / integration tests in multiple packages (main, services, database) that can be executed via `go test ./...` or other commands described later in the README. There is ~80% code coverage.
+- A multi-stage Dockerfile that uses [profiles](https://docs.docker.com/compose/profiles) in the `docker-compose.yml` file. This offers more flexibility in terms of env setup in future and for local tooling requirements.
+- E2E tests via dockerized Newman (CLI-based Postman test runner).
+
 ## Setup
 
-### Pre-requisites
+### Dev environment and workflow
 
-- Golang (>= v1.18) installed
+- NOTE: A recent Docker installation is a pre-requisite.
 
-  ```sh
-  # Install project dependencies
-  go get ./...
-  ```
+  I'm using `Docker version 20.10.12`.
 
-- Docker installed
+1. Setting up development env
 
-## Running the app
+First, we generate a config file for _Air_, which is similar to Nodemon, enabling hot-reloading.
+The resultant file, `.air.toml` is generated in the locla working directory, and is .gitignored.
 
 ```sh
-go run .
+docker compose run --rm my-go-api air init
+```
 
-# or via Docker (will also spin up DB, run postman tests)
-docker-compose up
+Now, if we run the following command to start the containers, we can make changes to our Go API code and see the changes reflected immediately in the terminal:
+
+```sh
+docker compose up
 ```
 
 ## Testing
@@ -105,6 +117,6 @@ go test -run=TestGetAllUsers/"table is empty"
 
   <https://www.wwt.com/article/postman-api-tests-collection-run-with-docker-compose>
 
-- TODO: Multi-stage Docker compose-build
+- Multi-stage Docker compose-build
 
   <https://firehydrant.com/blog/develop-a-go-app-with-docker-compose>
