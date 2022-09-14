@@ -104,3 +104,7 @@ go test -run=TestGetAllUsers/"table is empty"
 - Great primer on using Docker + Newman together
 
   <https://www.wwt.com/article/postman-api-tests-collection-run-with-docker-compose>
+
+- TODO: Multi-stage Docker compose-build
+
+  <https://firehydrant.com/blog/develop-a-go-app-with-docker-compose>
