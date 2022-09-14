@@ -1,8 +1,8 @@
 # Go Fiber Demo
 
-# Setup
+## Setup
 
-## Pre-requisites
+### Pre-requisites
 
 - Golang (>= v1.18) installed
 
@@ -13,46 +13,12 @@
 
 - Docker installed
 
-## Optional Dev Tools
-
-### Hot-reloading via Air
-
-It is optional but highly recommended to install _Air_, which is similar to Nodemon and allows for hot-reloading on file changes for improved developer experience.
-
-There are 2 ways to install it.
-
-1. As a Go module (requires Go 1.16+)
-
-   ```sh
-   go install github.com/cosmtrek/air@latest
-   ```
-
-2. Manually
-
-   ```sh
-   # binary will be $(go env GOPATH)/bin/air
-   curl -sSfL https://raw.githubusercontent.com/cosmtrek/air/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
-
-   # or install it into ./bin/
-   curl -sSfL https://raw.githubusercontent.com/cosmtrek/air/master/install.sh | sh -s
-   ```
-
-Confirm installation by running:
-
-```sh
-air -v
-```
-
 ## Running the app
 
 ```sh
-# If using air:
-air
-
-# Otherwise:
 go run .
 
-# or via Docker
+# or via Docker (will also spin up DB, run postman tests)
 docker-compose up
 ```
 
@@ -130,7 +96,7 @@ go test -run=TestGetAllUsers/"table is empty"
 
 ## Todo
 
-- Look into validation frameworks (similar to AJV etc)
+- Look into validation lib recommended by Fiber team in their docs
 - Swagger integration
 
 ## Resources
