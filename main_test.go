@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http/httptest"
 	"os"
@@ -11,6 +10,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 
 	"github.com/conormkelly/fiber-demo/database"
 	"github.com/conormkelly/fiber-demo/models"
@@ -20,26 +21,55 @@ var app App
 
 // Create an in-memory SQLite DB for testing purposes.
 func TestMain(m *testing.M) {
-	connectionString := "file:main_app?mode=memory&cache=shared"
-
-	options := &Options{
-		DatabaseType:     database.SQLite,
-		ConnectionString: &connectionString,
-		ModelsToMigrate:  []interface{}{&models.User{}},
-		Port:             nil,
-		// Port is nil by default anyway, but I've explicitly valued it here
-		// purely for demo purposes and visibiility into the fact
-		// that a live instance of the app isnt used in the tests
-	}
-
-	app = App{Options: options}
-
-	err := app.Initialize(nil)
+	app = App{Options: new(Options)}
+	conn, err := gorm.Open(sqlite.Open("file:main_app?mode=memory&cache=shared"), &gorm.Config{})
 	if err != nil {
-		log.Fatal("App failed to start: " + err.Error())
+		log.Fatalln("Failed to start sqlite: " + err.Error())
 	}
+
+	modelsToMigrate := []interface{}{&models.User{}}
+	conn.AutoMigrate(modelsToMigrate...)
+	app.DB = &database.Database{Conn: conn}
+
+	app.ConfigureFiber()
+	app.InitializeRoutes()
+
 	code := m.Run()
 	os.Exit(code)
+}
+
+func TestGetAppOptions(t *testing.T) {
+	type optionsTest struct {
+		description   string // Description of the test case
+		expectedError bool
+	}
+
+	// TODO: add test cases for when valued
+	testCases := []optionsTest{
+		{
+			description:   "Blank APP_DB_CONN_STRING is invalid",
+			expectedError: true,
+		},
+		{
+			description:   "Blank APP_PORT is invalid",
+			expectedError: true,
+		},
+		{
+			description:   "Blank APP_RUN_AUTO_MIGRATE is invalid",
+			expectedError: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(fmt.Sprintf("%s - %s", t.Name(), test.description), func(t *testing.T) {
+			// TODO: cross check result also
+			_, err := GetAppOptions()
+
+			if test.expectedError {
+				assert.NotNil(t, err, test.description)
+			}
+		})
+	}
 }
 
 func Test404Handler(t *testing.T) {
@@ -240,18 +270,16 @@ func TestDeleteUser(t *testing.T) {
 
 // Check that API returns correctly sanitized error messages when DB is not in good state
 func TestDBErrors(t *testing.T) {
-	// Test setup / arrangement
-	connectionString := "file:broken_app?mode=memory&cache=shared"
+	// Test setup / arrangement - an app with no tables migrated
+	brokenApp := &App{Options: new(Options)}
 
-	// An app with no tables migrated
+	// Create SQLite conn, but deliberately dont automigrate models
+	conn, _ := gorm.Open(sqlite.Open("file:broken_app?mode=memory&cache=shared"), &gorm.Config{})
+	brokenApp.DB = &database.Database{Conn: conn}
+	// deliberately not auto-migrating models
 
-	brokenApp := App{Options: &Options{
-		DatabaseType:     database.SQLite,
-		ConnectionString: &connectionString,
-		Port:             nil,
-		// deliberately not passing models to auto-migrate
-	}}
-	brokenApp.Initialize(nil)
+	brokenApp.ConfigureFiber()
+	brokenApp.InitializeRoutes()
 
 	testCases := []testCase{
 		{
@@ -293,16 +321,15 @@ func TestDBErrors(t *testing.T) {
 		},
 	}
 
-	executeTests(t, &brokenApp, testCases)
+	executeTests(t, brokenApp, testCases)
 }
 
 // Confirms that starting up DB with bad config state doesnt work
 func TestDBConfigErrors(t *testing.T) {
-	brokenApp := App{Options: &Options{
-		DatabaseType:     database.SQLite,
+	brokenApp := &App{Options: &Options{
 		ConnectionString: nil,
 	}}
-	err := brokenApp.Initialize(nil)
+	err := brokenApp.ConnectDB()
 	assert.NotNil(t, err, "Expected an error but didn't get one.")
 }
 
@@ -336,7 +363,7 @@ func executeTest(t *testing.T, application *App, test testCase) {
 		assert.Equalf(t, test.expectedStatusCode, resp.StatusCode, test.description)
 
 		if test.expectedResponse != "" {
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			assert.Nil(t, err, "Error parsing response body")
 			actualResponse := string(body)
 			assert.Equalf(t, test.expectedResponse, actualResponse, test.description)

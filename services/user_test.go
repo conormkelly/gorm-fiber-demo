@@ -6,8 +6,9 @@ import (
 	"testing"
 
 	"github.com/conormkelly/fiber-demo/database"
-	"github.com/conormkelly/fiber-demo/models"
 	"github.com/stretchr/testify/assert"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 type databaseTest struct {
@@ -57,14 +58,10 @@ func TestDatabaseDown(t *testing.T) {
 	}
 
 	// Test setup / arrangement
-	db := database.Database{}
-	modelsToMigrate := []interface{}{&models.User{}}
 	connectionString := "file:user_service_test?mode=memory&cache=shared"
-	err := db.Connect(&database.Options{
-		DatabaseType:     database.SQLite,
-		ConnectionString: &connectionString,
-		ModelsToMigrate:  modelsToMigrate,
-	})
+	conn, err := gorm.Open(sqlite.Open(connectionString), &gorm.Config{})
+	db := &database.Database{Conn: conn}
+
 	if err != nil {
 		log.Fatal("Database failed to connect: " + err.Error())
 	}
@@ -76,7 +73,7 @@ func TestDatabaseDown(t *testing.T) {
 	}
 	databaseConnection.Close()
 
-	userService := &UserService{DB: &db}
+	userService := &UserService{DB: db}
 
 	// Act
 	expectedErrorMessage := "sql: database is closed"
@@ -125,19 +122,19 @@ func TestNonExistentTable(t *testing.T) {
 	}
 
 	// Test setup / arrangement
-	// Creating a DB without any tables
-	db := database.Database{}
 	connectionString := "file:user_test_no_tables?mode=memory&cache=shared"
-
-	err := db.Connect(&database.Options{
-		DatabaseType:     database.SQLite,
-		ConnectionString: &connectionString,
-	})
+	conn, err := gorm.Open(sqlite.Open(connectionString), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Database failed to connect: " + err.Error())
 	}
+	db := &database.Database{Conn: conn}
+	// Deliberately creating a DB without any tables,
+	// i.e. automigrations are not being run:
 
-	userService := &UserService{DB: &db}
+	// modelsToMigrate := []interface{}{&models.User{}}
+	// db.Conn.AutoMigrate(modelsToMigrate...)
+
+	userService := &UserService{DB: db}
 
 	expectedErrorMessage := "no such table: users"
 	executeDbTests(userService, t, testCases, &expectedErrorMessage)
